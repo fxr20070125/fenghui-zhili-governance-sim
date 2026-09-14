@@ -1,0 +1,47 @@
+# Windows, macOS and editors
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# Microsoft Office temporary lock files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+
+# Node
+node_modules/
+dist/
+
+# Secrets and local configuration
+.env
+.env.*
+*.key
+*.pem
+secrets/
+
+# Temporary files and local test outputs
+tmp/
+.work/
+*.tmp
+*.log
+simulation/results-smoke/
+simulation/results-custom/
+
+# Private source materials
+private-data/
+raw-interviews/
+raw-recordings/
+
+# Large local video exports
+*.mp4
+*.mov
