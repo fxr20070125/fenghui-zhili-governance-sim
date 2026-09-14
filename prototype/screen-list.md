@@ -90,3 +90,4 @@
 | `technical-flow.md` 第 3 节管线 | `engine.js` 中同名函数与阶段标签 |
 | `safety-and-privacy.md` 脱敏规则 | `data.js` 中 `piiRules` 与「已脱敏」区块 |
 | `demo-script.md` 录屏步骤 | 步骤与截图编号一一对应 |
+| `recording-checklist.md` 逐镜清单 | 镜号、路由、关键动作与本文件第 2–4 节一致 |

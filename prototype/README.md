@@ -22,6 +22,7 @@ prototype/
 ├─ technical-flow.md         架构、AI 处理管线、指标口径、与 AI 2 的替换协议
 ├─ safety-and-privacy.md     隐私设计、脱敏规则、AI 边界、应急转接、演示数据声明
 ├─ demo-script.md            3 分钟录屏脚本 + 10 分钟扩展版 + 常见问答
+├─ recording-checklist.md    录屏执行清单：逐镜勾选、旁白合规检查、定点补录
 ├─ app/                      可运行原型
 │  ├─ index.html             入口（双击即可运行）
 │  ├─ styles.css             设计系统
