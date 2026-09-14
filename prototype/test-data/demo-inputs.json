@@ -1,0 +1,87 @@
+{
+  "_notice": "本文件全部为虚构或脱敏的演示数据，用于产品原型演示。不含任何真实个人信息，不代表真实系统接入。",
+  "_owner": "AI 3 产品原型与演示工程师",
+  "_round": "第一轮",
+  "purpose": "与 app/data.js 中的 DEMO_INPUTS / SEED_TICKETS 对应，便于评审在不打开原型时核对演示数据内容。",
+  "demoInputs": {
+    "normal": {
+      "title": "普通事件",
+      "channel": "voice",
+      "rawText": "玉兰路和望春街交叉口东侧的井盖破了，我骑到那儿差点翻车，打 13812340000 找我，旁边停着一辆沪A12345 的白色货车挡着盲道。",
+      "location": "G-03",
+      "photoLabel": "井盖破损 + 盲道被占",
+      "expectAI": {
+        "desensitized": ["手机号 → 138****00", "车牌 → 沪A·***"],
+        "category": "道路与设施",
+        "risk": "中",
+        "duplicate": "与 T-20260312-06 疑似重复（同类别、相邻网格）",
+        "suggestDispatch": "示例街道 · 市政设施管养队"
+      }
+    },
+    "duplicate": {
+      "title": "重复事件",
+      "channel": "photo",
+      "rawText": "又是玉兰路望春街路口那个井盖，看着还是没人修，我拍了张照片。",
+      "location": "G-03",
+      "photoLabel": "同一位置井盖破损",
+      "expectAI": {
+        "desensitized": [],
+        "category": "道路与设施",
+        "risk": "中",
+        "duplicate": "与 T-20260312-06 / T-20260312-07 疑似重复",
+        "suggestDispatch": "示例街道 · 市政设施管养队"
+      }
+    },
+    "emergency": {
+      "title": "紧急事件",
+      "channel": "voice",
+      "rawText": "玉兰路口有人被车撞倒了，地上有血，伤者动不了，我在旁边不敢动他。",
+      "location": "G-03",
+      "photoLabel": "现场（演示图，非真实照片）",
+      "expectAI": {
+        "desensitized": [],
+        "category": "紧急事件",
+        "risk": "紧急",
+        "duplicate": "不参与普通合并建议",
+        "suggestDispatch": "110 / 119 / 120 / 122（法定应急渠道）",
+        "behaviour": "退出普通工单流程，页面展示应急转接卡，平台不自动处置"
+      }
+    }
+  },
+  "seedTickets": {
+    "_note": "演示工单，全部虚构；编号、时间、位置、上报人均为演示值。",
+    "count": 8,
+    "ids": [
+      "T-20260312-07",
+      "T-20260312-06",
+      "T-20260312-05",
+      "T-20260311-18",
+      "T-20260311-15",
+      "T-20260311-12",
+      "T-20260311-09",
+      "T-20260310-21"
+    ],
+    "statusCoverage": ["submitted", "processing", "dispatched", "resolved", "need_info", "transferred"],
+    "riskCoverage": ["low", "medium", "high"],
+    "note": "第一轮演示数据不含紧急级别种子工单；紧急事件通过控制台「载入场景 → 紧急事件」现场演示。"
+  },
+  "ownerCandidates": {
+    "_note": "处置主体均为虚构示例，不代表任何真实单位。",
+    "community": ["示例社区 · 市容秩序岗", "示例社区 · 环境卫生岗", "示例社区 · 居民服务岗"],
+    "street": ["示例街道 · 市政设施管养队", "示例街道 · 应急与消防管理岗", "示例街道 · 交通秩序管理岗"],
+    "city": ["示例市级 · 城市照明管理单位", "示例市级 · 水务排水管理单位"]
+  },
+  "servicePoints": {
+    "_note": "驿站与服务点均为演示数据，不存在真实兑换关系。",
+    "count": 3,
+    "names": ["玉兰社区暖蜂驿站（演示）", "望春街骑手取餐休息点（演示）", "玉兰小学南侧司机服务站（演示）"]
+  },
+  "riderProfile": {
+    "_note": "虚构角色。",
+    "id": "R-1001",
+    "name": "示例骑手 A",
+    "group": "早高峰骑手",
+    "points": 120,
+    "pointsNote": "演示数值，用于展示激励机制界面"
+  }
+}

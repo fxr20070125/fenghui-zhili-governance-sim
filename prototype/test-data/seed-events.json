@@ -1,0 +1,173 @@
+{
+  "_notice": "本文件为虚构的演示工单数据，用于产品原型的事件列表与详情页。编号、时间、位置、上报人、门牌、车牌、手机号全部为虚构或脱敏值，不含任何真实个人信息，也不代表真实系统接入。",
+  "_owner": "AI 3 产品原型与演示工程师",
+  "_round": "第一轮",
+  "_demoClock": "2026-03-12 11:20（固定演示时间基准，保证录屏与截图可重复）",
+  "_usedBy": "app/data.js 的 SEED_TICKETS；界面中的分类、风险、重复与建议分派由 app/engine.js 现场计算",
+
+  "coverage": {
+    "count": 8,
+    "statuses": ["submitted", "processing", "dispatched", "resolved", "need_info", "transferred"],
+    "risks": ["low", "medium", "high"],
+    "note": "第一轮演示数据不含紧急级别种子工单；紧急事件由演示控制台现场载入，用于展示应急转接卡与紧急分流。"
+  },
+
+  "tickets": [
+    {
+      "id": "T-20260312-07",
+      "createdAt": "2026-03-12 09:12",
+      "channel": "mixed",
+      "location": "G-03",
+      "reporter": "R-1001 · 示例骑手 A",
+      "photoLabel": "井盖破损 + 盲道被占",
+      "status": "submitted",
+      "rawText": "玉兰路和望春街交叉口东侧的井盖破了，我骑到那儿差点翻车，打 13812340000 找我，旁边停着一辆沪A12345 的白色货车。",
+      "duplicateOf": "T-20260312-06",
+      "demoRole": "主演示工单：从 AI 确认页提交后进入治理端，由评委现场执行「确认并分派」"
+    },
+    {
+      "id": "T-20260312-06",
+      "createdAt": "2026-03-12 07:40",
+      "channel": "text",
+      "location": "G-03",
+      "reporter": "R-1002 · 示例骑手 B",
+      "photoLabel": "",
+      "status": "processing",
+      "rawText": "望春街往玉兰路方向非机动车道有个井盖下沉，晚上看不清，很危险。",
+      "duplicateOf": null,
+      "demoRole": "重复检测的对照工单：与 T-20260312-07 同网格同类别"
+    },
+    {
+      "id": "T-20260312-05",
+      "createdAt": "2026-03-12 08:05",
+      "channel": "photo",
+      "location": "G-01",
+      "reporter": "R-1003 · 示例骑手 C",
+      "photoLabel": "消防通道被占用",
+      "status": "dispatched",
+      "rawText": "示例社区 3 号楼东侧消防通道被两辆电动车和杂物堵住，通道只剩一半。",
+      "duplicateOf": null,
+      "decision": {
+        "action": "dispatch",
+        "owner": "示例街道 · 应急与消防管理岗",
+        "note": "高风险事项，转应急与消防管理岗，24 小时内核查",
+        "decidedAt": "2026-03-12 08:31"
+      },
+      "demoRole": "高风险事项：展示高风险分级与人工分派结果"
+    },
+    {
+      "id": "T-20260311-18",
+      "createdAt": "2026-03-11 17:22",
+      "channel": "voice",
+      "location": "G-01",
+      "reporter": "R-1001 · 示例骑手 A",
+      "photoLabel": "",
+      "status": "resolved",
+      "rawText": "玉兰社区门口那排共享单车全倒在盲道上，老人推车过不去。",
+      "duplicateOf": null,
+      "decision": {
+        "action": "dispatch",
+        "owner": "示例社区 · 市容秩序岗",
+        "note": "已转社区市容秩序岗整理",
+        "decidedAt": "2026-03-11 17:50"
+      },
+      "resolution": {
+        "text": "现场共享单车已规范摆放，盲道恢复通行，社区已与运营方约定每日两次巡查。",
+        "points": 10,
+        "owner": "示例社区 · 市容秩序岗",
+        "at": "2026-03-12 10:15"
+      },
+      "demoRole": "已办结样本：用于演示 S2 透明反馈与 S3 激励积分（骑手端进度页默认展示）"
+    },
+    {
+      "id": "T-20260311-15",
+      "createdAt": "2026-03-11 12:03",
+      "channel": "text",
+      "location": "G-07",
+      "reporter": "R-1004 · 示例网约车司机 D",
+      "photoLabel": "",
+      "status": "resolved",
+      "rawText": "春江路高架下穿段积水很深，昨天有骑手在水里摔了，希望处理一下排水。",
+      "duplicateOf": null,
+      "modifiedByReporter": true,
+      "decision": {
+        "action": "dispatch",
+        "owner": "示例街道 · 市政设施管养队",
+        "note": "已转市政设施管养队排查排水口",
+        "decidedAt": "2026-03-11 12:40"
+      },
+      "resolution": {
+        "text": "已疏通下穿段两处排水口并加设警示牌，高峰期安排巡查。",
+        "points": 10,
+        "owner": "示例街道 · 市政设施管养队",
+        "at": "2026-03-11 18:20"
+      },
+      "demoRole": "展示「上报人已修改 AI 建议类别」的标记"
+    },
+    {
+      "id": "T-20260311-12",
+      "createdAt": "2026-03-11 09:36",
+      "channel": "location",
+      "location": "G-02",
+      "reporter": "R-1005 · 示例骑手 E",
+      "photoLabel": "",
+      "status": "need_info",
+      "rawText": "玉兰小学南侧支路早上摆摊的太多了，车都过不去，孩子上学很危险。",
+      "duplicateOf": null,
+      "decision": {
+        "action": "need_info",
+        "owner": "",
+        "note": "请补充具体时间段与摊位数、是否影响消防通道",
+        "decidedAt": "2026-03-11 10:05"
+      },
+      "demoRole": "退回补充样本：展示人工退回与上报人待补充状态"
+    },
+    {
+      "id": "T-20260311-09",
+      "createdAt": "2026-03-11 07:15",
+      "channel": "photo",
+      "location": "G-01",
+      "reporter": "R-1002 · 示例骑手 B",
+      "photoLabel": "垃圾桶满溢",
+      "status": "resolved",
+      "rawText": "玉兰社区服务中心北门垃圾桶满溢，厨余污水流到人行道上。",
+      "duplicateOf": null,
+      "decision": {
+        "action": "dispatch",
+        "owner": "示例社区 · 环境卫生岗",
+        "note": "已转环境卫生岗清理",
+        "decidedAt": "2026-03-11 07:48"
+      },
+      "resolution": {
+        "text": "垃圾桶已清运，地面冲洗完毕，社区调整了该点位清运频次。",
+        "points": 10,
+        "owner": "示例社区 · 环境卫生岗",
+        "at": "2026-03-11 11:30"
+      },
+      "demoRole": "低风险市容类样本"
+    },
+    {
+      "id": "T-20260310-21",
+      "createdAt": "2026-03-10 15:48",
+      "channel": "mixed",
+      "location": "G-05",
+      "reporter": "R-1003 · 示例骑手 C",
+      "photoLabel": "路灯不亮",
+      "status": "transferred",
+      "rawText": "望春街 120 号门口路灯连续三天不亮，晚上骑车完全看不见。",
+      "duplicateOf": null,
+      "decision": {
+        "action": "transfer",
+        "owner": "示例市级 · 城市照明管理单位",
+        "note": "该路段照明由市级照明管理单位负责，转交处理",
+        "decidedAt": "2026-03-10 16:30"
+      },
+      "demoRole": "转交样本：展示职责不在本级时的转交路径"
+    }
+  ],
+
+  "privacy": {
+    "note": "原始描述中包含虚构的手机号与车牌，仅用于演示脱敏效果；治理端与骑手端展示的都是脱敏后的版本。",
+    "fictionalValues": ["13812340000（虚构手机号）", "沪A12345（虚构车牌）", "3 号楼 502 室（虚构门牌）"]
+  }
+}

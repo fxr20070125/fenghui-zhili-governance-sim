@@ -1,0 +1,75 @@
+{
+  "_notice": "本文件说明原型中「AI 处理」的可解释规则。原型以规则表演示流程，不代表真实模型能力，也未评估准确率；所有输出均为建议，必须由治理人员人工确认。",
+  "_owner": "AI 3 产品原型与演示工程师",
+  "_round": "第一轮",
+  "_implementation": "可执行实现在 prototype/app/engine.js，本文件为可读版本，便于评审核对。",
+
+  "pipeline": [
+    { "step": 1, "name": "脱敏", "function": "desensitize(text)", "output": "脱敏文本 + 命中规则明细" },
+    { "step": 2, "name": "结构化", "function": "structure(text, ctx)", "output": "什么问题 / 在哪里 / 什么时候 / 谁上报 / 可能影响 / 疑似原因" },
+    { "step": 3, "name": "分类", "function": "classify(text)", "output": "类别 + 置信度 + 命中关键词 + 次选类别" },
+    { "step": 4, "name": "重复检测", "function": "detectDuplicate(ticket, tickets)", "output": "重复候选 + 网格距离 + 时间差 + 相似度" },
+    { "step": 5, "name": "风险分级", "function": "assessRisk(text, category)", "output": "低 / 中 / 高 / 紧急 + 判定理由" },
+    { "step": 6, "name": "建议分派", "function": "suggestDispatch(category, risk)", "output": "建议层级 + 建议处置主体 + 建议时限 + 依据（仅建议）" }
+  ],
+
+  "desensitizeRules": [
+    { "id": "PII-ID", "target": "身份证号", "action": "整段遮蔽，保留前 6 后 3", "priority": 1, "note": "必须先于手机号规则执行，否则 18 位中的 11 位数字会被手机号规则误伤" },
+    { "id": "PII-PHONE", "target": "手机号", "action": "保留前三后二", "priority": 2, "note": "使用数字边界，避免匹配长数字串内部" },
+    { "id": "PII-PLATE", "target": "车牌", "action": "保留省份简称与首字母，其余遮蔽", "priority": 3 },
+    { "id": "PII-CONTACT", "target": "微信号 / QQ", "action": "替换为「联系方式已隐藏」", "priority": 4 },
+    { "id": "PII-ADDR", "target": "精确门牌（号 / 号楼 + 室 / 门 / 户）", "action": "保留到楼栋号，户号降精度", "priority": 5 },
+    { "id": "PII-NAME", "target": "疑似真实姓名（姓 + 称谓）", "action": "替换为「某先生 / 某女士」", "priority": 6 }
+  ],
+
+  "categories": [
+    { "key": "emergency", "name": "紧急事件", "risk": "emergency", "suggestedLevel": "法定应急渠道", "sla": "立即转接", "keywords": ["火灾", "起火", "冒烟", "燃气泄漏", "煤气", "打架", "斗殴", "伤者", "受伤", "流血", "晕倒", "交通事故", "撞车", "撞人", "触电", "漏电", "高空坠物", "坍塌", "塌方", "有人被困", "溺水", "治安"] },
+    { "key": "safety", "name": "公共安全", "risk": "high", "suggestedLevel": "街道级", "sla": "24 小时内处置", "keywords": ["消防通道", "消防栓", "燃气", "电线", "裸露", "电箱", "井盖缺失", "围挡倒塌", "易燃", "危险"] },
+    { "key": "road", "name": "道路与设施", "risk": "medium", "suggestedLevel": "街道级", "sla": "72 小时内处置", "keywords": ["井盖", "路面", "坑洼", "路灯", "护栏", "积水", "塌陷", "破损", "盲道", "斑马线", "减速带"] },
+    { "key": "order", "name": "交通与秩序", "risk": "low", "suggestedLevel": "街道级", "sla": "7 天内处置", "keywords": ["违停", "占道", "单车", "乱停", "围挡", "商贩", "摆摊", "拥堵", "逆行"] },
+    { "key": "environment", "name": "市容环境", "risk": "low", "suggestedLevel": "社区级", "sla": "7 天内处置", "keywords": ["垃圾", "堆物", "污水", "油污", "小广告", "异味", "落叶", "粪便", "杂物"] },
+    { "key": "service", "name": "社区服务", "risk": "low", "suggestedLevel": "社区级", "sla": "10 天内反馈", "keywords": ["驿站", "取餐点", "无障碍", "休息区", "饮水", "充电", "停车位", "母婴", "厕所"] },
+    { "key": "other", "name": "其他事项", "risk": "low", "suggestedLevel": "社区级", "sla": "10 天内反馈", "keywords": [], "note": "未命中明确规则时的兜底类别，建议人工判断" }
+  ],
+
+  "confidenceFormula": {
+    "normal": "min(0.95, 0.45 + 命中关键词数 × 0.16)",
+    "emergency": "min(0.97, 0.78 + 命中关键词数 × 0.05)",
+    "note": "置信度仅为界面演示值，不代表真实模型概率，也未做校准与评估。"
+  },
+
+  "duplicateRules": {
+    "condition": "同类别 且 网格距离 ≤ 1 且 时间差 ≤ 48 小时",
+    "relatedHint": "网格距离 ≤ 1 但类别不同 → 提示「可能相关」",
+    "score": "0.6×同类别 + 0.25×(1-网格距离) + 0.15×(1-时间差/48)",
+    "excludedStatuses": ["resolved", "transferred"],
+    "decision": "合并仅作为建议；上报人可选择合并或继续单独上报，治理端仍保留人工判断"
+  },
+
+  "riskLevels": [
+    { "level": "emergency", "label": "紧急", "path": "退出普通流程，展示应急转接卡（110 / 119 / 120 / 122）" },
+    { "level": "high", "label": "高", "path": "高风险标记，建议 24 小时内处置，需人工确认" },
+    { "level": "medium", "label": "中", "path": "建议 72 小时内处置" },
+    { "level": "low", "label": "低", "path": "建议 7 天内处置" }
+  ],
+
+  "dispatchSuggestion": {
+    "note": "输出固定标记为 AI 建议；不存在自动分派代码路径，治理端必须人工点击确认。",
+    "mapping": [
+      { "category": "safety", "owner": "示例街道 · 应急与消防管理岗" },
+      { "category": "road", "owner": "示例街道 · 市政设施管养队" },
+      { "category": "order", "owner": "示例街道 · 交通秩序管理岗" },
+      { "category": "environment", "owner": "示例社区 · 环境卫生岗" },
+      { "category": "service", "owner": "示例社区 · 居民服务岗" },
+      { "category": "other", "owner": "示例社区 · 居民服务岗" }
+    ],
+    "emergencyOverride": "紧急事件不进入普通分派建议，只提示转接 110 / 119 / 120 / 122"
+  },
+
+  "knownLimitations": [
+    "规则式匹配在跨类别、长文本、方言口语场景会退化。",
+    "未使用真实地理编码，位置为虚构网格，距离为网格距离近似。",
+    "置信度为界面演示值，未经校准，不得对外宣称准确率。",
+    "未实现反作弊，无效上报主要依靠重复合并与人工确认降低。"
+  ]
+}

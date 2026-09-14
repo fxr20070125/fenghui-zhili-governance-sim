@@ -1,0 +1,90 @@
+{
+  "_notice": "本文件全部为占位数据（PLACEHOLDER_SIM_RESULT），不是实验结果，不得作为证据引用。真实结果由 AI 2 社会仿真实验工程师在第二轮提供。",
+  "_owner": "AI 3 产品原型与演示工程师",
+  "_replacementProtocol": "见 prototype/technical-flow.md 第 6 节：替换数值 → 移除 PLACEHOLDER_SIM_RESULT 前缀 → 改为 dataSource=AI2-simulation → 重新生成截图 → 更新 demo-script.md",
+  "_status": "第一轮占位",
+
+  "dataSource": "PLACEHOLDER_SIM_RESULT",
+  "isPlaceholder": true,
+  "notice": "占位数据，不是实验结果。数值用于演示界面结构，须由社会仿真实验的最终结果替换。",
+  "runDate": null,
+  "repeats": null,
+
+  "scenarios": [
+    { "id": "S0", "name": "现状基准", "added": "微信群、电话或零散反映" },
+    { "id": "S1", "name": "AI 上报", "added": "一键上报 + AI 脱敏 / 分类 / 合并 / 建议分派" },
+    { "id": "S2", "name": "AI 上报 + 透明反馈", "added": "责任主体、处理进度、结果反馈" },
+    { "id": "S3", "name": "AI 上报 + 透明反馈 + 差异化激励", "added": "积分、驿站权益、托管优先权等服务型激励" }
+  ],
+
+  "metrics": [
+    {
+      "key": "effectiveReportRate", "name": "有效上报率", "unit": "%", "direction": "up",
+      "note": "有效工单数 / 总上报数",
+      "values": { "S0": 18, "S1": 52, "S2": 61, "S3": 74 }
+    },
+    {
+      "key": "duplicateOrInvalidRate", "name": "重复或无效上报率", "unit": "%", "direction": "down",
+      "note": "（重复 + 无效）/ 总上报数",
+      "values": { "S0": 46, "S1": 21, "S2": 17, "S3": 9 }
+    },
+    {
+      "key": "dispatchAccuracy", "name": "工单分派准确率", "unit": "%", "direction": "up",
+      "note": "一次分派即被认可的工单占比",
+      "values": { "S0": 41, "S1": 63, "S2": 71, "S3": 79 }
+    },
+    {
+      "key": "avgHandlingHours", "name": "平均处置时间", "unit": "小时", "direction": "down",
+      "note": "受理到办结的平均时长",
+      "values": { "S0": 41.5, "S1": 22.6, "S2": 16.8, "S3": 15.2 }
+    },
+    {
+      "key": "participantTimeCost", "name": "参与者时间成本", "unit": "分钟", "direction": "down",
+      "note": "单次上报的平均操作与等待时间；占位值显示 S2、S3 略高于 S1，用于提示透明反馈与激励的额外操作成本",
+      "values": { "S0": 5.4, "S1": 1.5, "S2": 1.8, "S3": 2.1 }
+    },
+    {
+      "key": "participationGap", "name": "不同新就业群体参与差距", "unit": "百分点", "direction": "down",
+      "note": "分组参与率的极差",
+      "values": { "S0": 21, "S1": 13, "S2": 9, "S3": 6 }
+    }
+  ],
+
+  "supplementary": [
+    {
+      "key": "sustainedParticipation", "name": "持续参与意愿指数（补充观察项）", "unit": "指数", "direction": "up",
+      "note": "来自核心研究问题，但不属于六项固定指标，单独展示",
+      "values": { "S0": 31, "S1": 48, "S2": 66, "S3": 78 }
+    }
+  ],
+
+  "groups": [
+    { "name": "早高峰骑手", "values": { "S0": 26, "S1": 58, "S2": 66, "S3": 79 } },
+    { "name": "夜间骑手", "values": { "S0": 17, "S1": 44, "S2": 55, "S3": 71 } },
+    { "name": "网约车司机", "values": { "S0": 12, "S1": 38, "S2": 49, "S3": 65 } },
+    { "name": "兼职骑手", "values": { "S0": 5, "S1": 27, "S2": 38, "S3": 58 } }
+  ],
+
+  "conclusion": "PLACEHOLDER_SIM_RESULT::conclusion — 结论段落将在社会仿真实验完成后写入，并区分「模型显示」与「现实证明」。当前不提供任何因果性结论。",
+
+  "limitations": [
+    "全部数值为占位数据，不是实验结果，不得在报告或答辩中作为证据引用。",
+    "数值方向仅用于演示界面结构，不能作为机制有效性的判断依据。",
+    "参与者时间成本在 S2、S3 的占位值高于 S1，体现透明反馈与激励可能带来的额外确认步骤，该现象需由仿真验证。",
+    "参与差距为分组参与率的极差，分组口径须由 AI 2 在模型说明中固定。",
+    "占位数值未标注波动范围，替换时必须补上重复运行次数、均值与波动。"
+  ],
+
+  "assumptionRefs": "CITATION_NEEDED — 参数来源待 AI 1 证据表与 AI 2 实验设计补充",
+
+  "replacementChecklist": [
+    "① 从 simulation/results/final-summary.md 提取六项指标的四情景结果",
+    "② 覆盖本文件 metrics[].values 与 groups[]",
+    "③ 将 dataSource 改为 AI2-simulation，isPlaceholder 改为 false，填写 runDate 与 repeats",
+    "④ 删除 conclusion 中的 PLACEHOLDER_SIM_RESULT 前缀并写入确认过的结论措辞",
+    "⑤ 同步更新 app/data.js 中的 SIM_RESULTS 对象",
+    "⑥ 运行 node prototype/app/shot.js 重新生成截图",
+    "⑦ 更新 prototype/demo-script.md 中与数字有关的旁白",
+    "⑧ 在交接记录中说明替换来源与时间"
+  ]
+}
