@@ -378,11 +378,11 @@ window.FHZ_ENGINE = (function () {
       decidedAt: DEMO_NOW
     };
     if (decision.action === 'dispatch') {
-      t.status = 'dispatched';
       t.timeline.push({ at: DEMO_NOW, actor: '治理人员', text: '人工确认并分派给「' + decision.owner + '」' + (decision.note ? '；备注：' + decision.note : ''), kind: 'human' });
-      t.timeline.push({ at: DEMO_NOW, actor: '处置主体', text: '已接收工单，进入处置', kind: 'owner' });
-      t.status = 'processing';
+      t.status = 'dispatched';
       t.timeline.push({ at: DEMO_NOW, actor: '系统反馈', text: '已向上报人推送责任主体与处理进度', kind: 'feedback' });
+      t.status = 'processing';
+      t.timeline.push({ at: DEMO_NOW, actor: '处置主体', text: '已接收工单，进入处置', kind: 'owner' });
     } else if (decision.action === 'need_info') {
       t.status = 'need_info';
       t.timeline.push({ at: DEMO_NOW, actor: '治理人员', text: '人工退回补充：' + (decision.note || '请补充现场信息'), kind: 'human' });

@@ -1,7 +1,7 @@
 {
   "_notice": "本文件全部为虚构或脱敏的演示数据，用于产品原型演示。不含任何真实个人信息，不代表真实系统接入。",
   "_owner": "AI 3 产品原型与演示工程师",
-  "_round": "第一轮",
+  "_round": "第一轮建立；第二轮保持（产品数据仍为演示数据，仿真数据已单独替换为 AI 2 结果）",
   "purpose": "与 app/data.js 中的 DEMO_INPUTS / SEED_TICKETS 对应，便于评审在不打开原型时核对演示数据内容。",
   "demoInputs": {
     "normal": {
@@ -44,7 +44,7 @@
         "risk": "紧急",
         "duplicate": "不参与普通合并建议",
         "suggestDispatch": "110 / 119 / 120 / 122（法定应急渠道）",
-        "behaviour": "退出普通工单流程，页面展示应急转接卡，平台不自动处置"
+        "behaviour": "退出普通工单流程：提交后进入「紧急事件 · 已留存线索」页，不进入普通进度视图，也不产生普通分派与办结动作"
       }
     }
   },
@@ -63,6 +63,7 @@
     ],
     "statusCoverage": ["submitted", "processing", "dispatched", "resolved", "need_info", "transferred"],
     "riskCoverage": ["low", "medium", "high"],
+    "statusMachineNote": "状态机：人工确认分派（dispatched）→ 处置主体接单（processing）→ 办结（resolved）。种子工单按各自最终状态补全时间轴节点，避免出现「状态已分派但时间轴无分派记录」的矛盾。",
     "note": "第一轮演示数据不含紧急级别种子工单；紧急事件通过控制台「载入场景 → 紧急事件」现场演示。"
   },
   "ownerCandidates": {
@@ -77,11 +78,11 @@
     "names": ["玉兰社区暖蜂驿站（演示）", "望春街骑手取餐休息点（演示）", "玉兰小学南侧司机服务站（演示）"]
   },
   "riderProfile": {
-    "_note": "虚构角色。",
+    "_note": "虚构角色。分组名在第二轮改为「示例骑手（演示分组）」，避免与仿真侧的两类群体口径混淆。",
     "id": "R-1001",
     "name": "示例骑手 A",
-    "group": "早高峰骑手",
+    "group": "示例骑手（演示分组）",
     "points": 120,
-    "pointsNote": "演示数值，用于展示激励机制界面"
+    "pointsNote": "演示数值，用于展示激励机制界面；办结产生的积分不累计到该余额"
   }
 }

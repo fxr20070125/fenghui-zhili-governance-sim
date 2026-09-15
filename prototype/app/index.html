@@ -3,18 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>蜂汇智理 · 产品原型 v0.1（演示环境）</title>
+<title>蜂汇智理 · 产品原型 v0.2（演示环境）</title>
 <!--
   蜂汇智理 —— 新就业群体参与城市治理的 AI 协同与仿真平台
-  产品原型 v0.1 · AI 3 产品原型与演示工程师
+  产品原型 v0.2 · AI 3 产品原型与演示工程师（第二轮）
 
   使用说明：
     1. 直接用浏览器打开本文件即可运行，无需服务器、无需构建、无外部依赖。
+       需 Chrome 62+ / Edge 79+ 等支持后行断言（lookbehind）的现代浏览器。
     2. 顶部为演示控制台，可切换情景 S0–S3、载入演示场景、重置演示数据、进入演示模式。
-    3. 本原型的全部数据为虚构或脱敏的演示数据；仿真数值带 PLACEHOLDER_SIM_RESULT 标记，
-       属于占位数据，不是实验结果。
-    4. 本原型不接入任何政府、物业、外卖或网约车平台生产系统。
-    5. AI 输出仅为建议，必须由治理人员人工确认；严重事故、火灾或治安事件
+    3. 产品数据（工单、服务点、积分）全部为虚构或脱敏的演示数据。
+    4. 仿真数值为 AI 2 第一轮合成仿真结果（每情景 20 次重复、240 名合成从业者、56 个模拟日），
+       在当前项目假设下得出，不是现实统计或政策效果证明。
+       尚未产出的敏感性分析与玉兰万象平台复跑以 SIM_RESULT_NEEDED 标注，不以估计值代替。
+    5. 本原型不接入任何政府、物业、外卖或网约车平台生产系统。
+    6. AI 输出仅为建议，必须由治理人员人工确认；严重事故、火灾或治安事件
        必须提示联系 110 / 119 / 120 / 122，平台不替代法定应急渠道。
 -->
 <link rel="stylesheet" href="styles.css">
@@ -25,8 +28,8 @@
 <div id="toast" class="toast"></div>
 <footer style="padding:18px 16px 40px;text-align:center;color:#6c737d;font-size:12px;line-height:1.9">
   <div id="demoStatus" class="mono" style="color:#8b939c;font-size:11px;margin-bottom:8px"></div>
-  <div>蜂汇智理 · 产品原型 v0.1 · 由 AI 3 产品原型与演示工程师交付</div>
-  <div>原型演示环境：全部数据为虚构或脱敏的演示数据；仿真数值为占位（PLACEHOLDER_SIM_RESULT），不是实验结果。</div>
+  <div>蜂汇智理 · 产品原型 v0.2 · 由 AI 3 产品原型与演示工程师交付（第二轮：已替换为 AI 2 第一轮仿真结果）</div>
+  <div>产品数据为虚构或脱敏的演示数据；仿真数值为第一轮合成仿真结果（20 次重复），在当前项目假设下得出，不是现实统计或政策效果证明。</div>
   <div>本原型不代表任何真实系统接入；AI 输出仅为建议，需人工确认；紧急情况请拨打 110 / 119 / 120 / 122。</div>
 </footer>
 <script src="data.js"></script>

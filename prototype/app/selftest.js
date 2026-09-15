@@ -197,26 +197,65 @@ check('未办结数量正确', m.pendingCount === seedFull.filter(t => ['submitt
 check('指标附带演示口径声明', /演示口径/.test(m.scope));
 check('分派准确率为数值或 null', m.dispatchAccuracy === null || typeof m.dispatchAccuracy === 'number');
 
-/* -------------------------------------------------- 9 占位数据与安全边界 */
+/* ------------------------------------ 9 仿真数据契约与安全边界（第二轮） */
 
-section('⑨ 占位标记与安全边界');
+section('⑨ 仿真数据契约与安全边界');
 const sim = D.SIM_RESULTS;
-check('仿真数据源标记为占位', sim.dataSource === E.PLACEHOLDER_PREFIX, sim.dataSource);
-check('仿真结果为占位标志', sim.isPlaceholder === true);
-check('仿真无运行日期与重复次数', sim.runDate === null && sim.repeats === null);
+const SKEYS = ['S0', 'S1', 'S2', 'S3'];
+
+check('仿真数据源已标记为 AI 2 结果', sim.dataSource === 'AI2-simulation', sim.dataSource);
+check('仿真结果不再标记为占位', sim.isPlaceholder === false);
+check('标注为第一轮结果', sim.round === '第一轮', sim.round);
+check('已填写重复次数与运行日期', sim.repeats === 20 && !!sim.runDate, sim.repeats + ' / ' + sim.runDate);
 check('六项固定指标齐全', sim.metrics.length === 6, String(sim.metrics.length));
 check('S0–S3 四情景齐全', D.SCENARIOS.length === 4);
-check('每个指标含四情景数值', sim.metrics.every(mt => ['S0', 'S1', 'S2', 'S3'].every(k => typeof mt.values[k] === 'number')));
-check('结论含占位前缀', sim.conclusion.indexOf(E.PLACEHOLDER_PREFIX) === 0);
-check('占位提示文案存在', /占位数据，不是实验结果/.test(sim.notice));
-check('假设来源待补引用', /CITATION_NEEDED/.test(sim.assumptionRefs));
+check('每个指标含四情景数值', sim.metrics.every(mt => SKEYS.every(k => typeof mt.values[k] === 'number')));
+check('每个指标含四项 95% 区间', sim.metrics.every(mt => mt.ci && SKEYS.every(k => Array.isArray(mt.ci[k]) && mt.ci[k].length === 2)));
+check('区间下界不大于点估计', sim.metrics.every(mt => SKEYS.every(k => mt.ci[k][0] <= mt.values[k])));
+check('区间上界不小于点估计', sim.metrics.every(mt => SKEYS.every(k => mt.ci[k][1] >= mt.values[k])));
+check('有效上报率与重复无效率互补', SKEYS.every(k => {
+  const a = sim.metrics.find(x => x.key === 'effectiveReportRate').values[k];
+  const b = sim.metrics.find(x => x.key === 'duplicateOrInvalidRate').values[k];
+  return Math.abs(a + b - 100) < 0.11;
+}));
+check('指标名已改为「平均上报耗时」', sim.metrics.some(mt => mt.key === 'participantTimeCost' && mt.name === '平均上报耗时'));
+check('时间成本保留原始精度说明', !!sim.metrics.find(mt => mt.key === 'participantTimeCost').exact);
+check('参与差距口径注明为两类群体之差', /骑手参与率与网约车司机参与率之差/.test(sim.metrics.find(mt => mt.key === 'participationGap').note));
+check('分组数据仅两类', sim.groups.length === 2);
+check('分组差远小于差距指标（口径差异已声明）', SKEYS.every(k => {
+  const gap = sim.metrics.find(mt => mt.key === 'participationGap').values[k];
+  const d = Math.abs(sim.groups[0].values[k] - sim.groups[1].values[k]);
+  // 差距指标是逐次 |骑手−司机| 的均值，与两组均值之差不是同一算法，故只校验两者同向且后者更小
+  return d < gap + 0.5;
+}) && /不是两组均值的差/.test(sim.groupCaveat));
+check('结论使用「模型显示」限定语', /模型显示/.test(sim.conclusion));
+check('结论未使用「显著」', !/显著/.test(sim.conclusion));
+check('限定语声明合成仿真与项目假设', /项目假设/.test(sim.notice) && /合成仿真/.test(sim.notice) && /项目假设/.test(sim.limiter));
+check('限制清单声明未做显著性检验', sim.limitations.some(x => /显著性检验/.test(x)));
+check('限制清单声明敏感性分析未执行', sim.limitations.some(x => /敏感性分析/.test(x) && /尚未执行|未执行/.test(x)));
+check('限制清单声明未在玉兰万象复跑', sim.limitations.some(x => /玉兰万象/.test(x)));
+check('S1→S2 单变量限制已声明', sim.limitations.some(x => /36→30/.test(x)) || /36→30/.test(JSON.stringify(sim.pairedEffects)));
+check('尚未产出的材料保留 SIM_RESULT_NEEDED', Array.isArray(sim.pendingItems) && sim.pendingItems.length >= 2 &&
+  sim.pendingItems.every(p => p.key.indexOf('SIM_RESULT_NEEDED') === 0));
+check('敏感性缺失项被显式标记', sim.pendingItems.some(p => p.key === 'SIM_RESULT_NEEDED_SENSITIVITY'));
+check('参数表标注敏感性状态为待补', D.SIM_PARAMS.some(p => p.key === 'sensitivity_status' && p.source === '待补'));
+check('参数表声明 S1→S2 双参数变化', D.SIM_PARAMS.some(p => p.key === 'base_resolution_hours' && /不应全部归因/.test(p.note)));
+check('假设来源仍标注引用待核', /CITATION_NEEDED/.test(sim.assumptionRefs));
 
 const appSrc = fs.readFileSync(path.join(APP, 'app.js'), 'utf8');
 check('界面代码无自动分派路径', !/autoDispatch|自动分派\s*[:=]/.test(appSrc));
 check('界面代码声明 AI 建议需人工确认', /需人工确认/.test(appSrc));
 check('界面代码含四个法定号码', ['110', '119', '120', '122'].every(n => appSrc.indexOf(n) !== -1));
 check('界面代码声明不替代法定应急渠道', /不替代法定应急渠道/.test(appSrc));
-check('界面代码使用占位前缀常量', appSrc.indexOf('E.PLACEHOLDER_PREFIX') !== -1 || appSrc.indexOf('PLACEHOLDER_SIM_RESULT') !== -1);
+check('界面仍保留占位前缀常量用于待补项', appSrc.indexOf('E.PLACEHOLDER_PREFIX') !== -1);
+check('界面已渲染 95% 区间', /95% \[/.test(appSrc));
+check('界面声明未做显著性检验', /未做统计显著性检验|未做任何统计显著性检验/.test(appSrc));
+check('界面含数据用途与单独同意流程', /单独同意/.test(appSrc) && /同意/.test(appSrc));
+check('界面含 AI 生成内容标识', /AI 生成/.test(appSrc));
+check('界面含申诉与举报入口占位', /申诉/.test(appSrc));
+check('界面含上报人修改描述入口', /btnEditDesc/.test(appSrc));
+check('紧急事件提交后进入专用确认页', /rider-emergency-confirm/.test(appSrc));
+check('演示模式不再隐藏顶部声明条', !/body\.demo-mode \.topbar \{ display: none/.test(fs.readFileSync(path.join(APP, 'styles.css'), 'utf8')));
 
 const dataSrc = fs.readFileSync(path.join(APP, 'data.js'), 'utf8');
 check('数据层声明不接入生产系统', /不接入任何政府、物业、外卖或网约车平台生产系统/.test(dataSrc));
@@ -224,7 +263,9 @@ const phoneLike = dataSrc.match(/1[3-9]\d{9}/g) || [];
 check('数据层仅含虚构演示号码', phoneLike.every(n => n === '13812340000'), JSON.stringify(phoneLike));
 
 const htmlSrc = fs.readFileSync(path.join(APP, 'index.html'), 'utf8');
-check('入口页含演示环境声明', /虚构或脱敏/.test(htmlSrc) && /PLACEHOLDER_SIM_RESULT/.test(htmlSrc));
+check('入口页含演示环境声明', /虚构或脱敏/.test(htmlSrc) && /合成仿真/.test(htmlSrc));
+check('入口页声明不是现实统计', /不是现实统计或政策效果证明/.test(htmlSrc));
+check('入口页声明浏览器要求', /Chrome 62\+/.test(htmlSrc));
 check('入口页无外部资源引用', !/https?:\/\//.test(htmlSrc.replace(/<!--[\s\S]*?-->/g, '')), '存在外部链接');
 check('入口页含应急号码声明', /110 \/ 119 \/ 120 \/ 122/.test(htmlSrc));
 
@@ -238,7 +279,8 @@ check('紧急管线风险为紧急', review.risk.level === 'emergency');
 const catNames = D.CATEGORIES.map(c => c.name);
 check('类别数量为 6 类加 1 兜底', catNames.length === 6 && !!D.FALLBACK_CATEGORY.name);
 check('每类都有建议层级与时限', D.CATEGORIES.every(c => !!c.level && !!c.sla));
-check('脱敏规则表覆盖 6 类', D.PII_RULES.length === 6, String(D.PII_RULES.length));
+check('脱敏规则表覆盖 7 类（含未实现的人脸规则）', D.PII_RULES.length === 7 &&
+  D.PII_RULES.some(r => r.id === 'PII-FACE' && r.implemented === false));
 
 /* ------------------------------------------------------------------ 汇总 */
 

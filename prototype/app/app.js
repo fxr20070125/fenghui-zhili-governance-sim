@@ -1,8 +1,9 @@
 /* =============================================================================
  * 蜂汇智理 原型 v0.1 — 界面与交互（app.js）
  * -----------------------------------------------------------------------------
- * 免责声明：本原型的全部数据为虚构或脱敏的演示数据；
- *           仿真数值带 PLACEHOLDER_SIM_RESULT 标记，属占位数据，不是实验结果；
+ * 免责声明：本原型的全部产品数据为虚构或脱敏的演示数据；
+ *           仿真数值为 AI 2 第一轮合成仿真结果（每情景 20 次重复），在当前项目假设下得出，
+ *           不是现实统计或政策效果证明；敏感性分析与玉兰万象复跑尚未产出，界面以 SIM_RESULT_NEEDED 标注；
  *           AI 输出仅为建议，必须由治理人员人工确认；
  *           严重事故、火灾或治安事件必须提示联系 110 / 119 / 120 / 122。
  * 负责人：AI 3
@@ -36,7 +37,11 @@
     activeTicketId: null,
     filters: { risk: 'all', status: 'all' },
     simParams: { repeats: 5, incentive: 60 },
-    demoMode: false
+    demoMode: false,
+    consent: false,
+    consentModal: false,
+    consentDraft: { a: false, b: false, c: false },
+    editingDesc: false
   };
 
   /* ---------------------------------------------------------------- 工具函数 */
@@ -51,6 +56,63 @@
   }
 
   function ph(v) { return '<span class="ph-inline">' + E.PLACEHOLDER_PREFIX + '</span>' + esc(v); }
+
+  // ---- 仿真结果渲染辅助（第二轮：真实结果 + 95% 区间）----
+  var SIM_KEYS = ['S0', 'S1', 'S2', 'S3'];
+
+  function num(v) {
+    if (typeof v !== 'number') return String(v);
+    return (Math.abs(v % 1) > 0.0001) ? v.toFixed(2) : String(v);
+  }
+
+  function valCell(mt, k) {
+    var ci = mt.ci && mt.ci[k];
+    var main = num(mt.values[k]) + (mt.unit === '%' ? '%' : '');
+    var unitLine = (mt.unit && mt.unit !== '%') ? '<div class="note small">' + esc(mt.unit) + '</div>' : '';
+    var ciLine = ci ? '<div class="ci">95% [' + num(ci[0]) + ', ' + num(ci[1]) + ']</div>' : '';
+    return main + unitLine + ciLine;
+  }
+
+  function simLegend(sim) {
+    return '<div class="note small sim-legend">' +
+      '数据来源：<span class="mono">' + esc(sim.dataSource) + '</span> · ' + esc(sim.round) + '合成仿真 · 每情景 ' + sim.repeats + ' 次重复 · ' +
+      sim.populationPerRun + ' 名合成从业者 × ' + sim.daysPerRun + ' 个模拟日 · 随机种子 ' + sim.baseSeed +
+      ' · 配对共同随机数。每格数值下方的 95% 区间为正态近似。' +
+      '<br><b>限定语：</b>' + esc(sim.limiter) + '在当前项目假设下得出，不是现实统计或政策效果证明。' +
+      '</div>';
+  }
+
+  function simPendingCard(sim) {
+    var pending = sim.pendingItems || [];
+    var list = pending.filter(function (p) { return p.key !== 'SIM_RESULT_NEEDED_FINAL_SUMMARY'; });
+    return '<div class="card placeholder-card"><div class="card-head"><h3>尚未产出的仿真材料</h3><span class="spacer"></span>' +
+      '<span class="badge ph">' + pending.length + ' 项待补</span></div>' +
+      '<div class="ph-banner"><span class="mono">' + E.PLACEHOLDER_PREFIX + '</span>' +
+      '<span>以下条目在仿真侧尚未产出，本页不使用估计值代替，也未自行编造数字。</span></div>' +
+      '<ul class="small" style="margin:0">' + list.map(function (p) {
+        return '<li><b class="mono">' + esc(p.key) + '</b>：' + esc(p.desc) + '</li>';
+      }).join('') + '</ul></div>';
+  }
+
+  function simMetricTable(sim, caption) {
+    var rows = sim.metrics.map(function (mt) {
+      var arr = SIM_KEYS.map(function (k) { return mt.values[k]; });
+      var best = mt.direction === 'up' ? Math.max.apply(null, arr) : Math.min.apply(null, arr);
+      var worst = mt.direction === 'up' ? Math.min.apply(null, arr) : Math.max.apply(null, arr);
+      return '<tr><td><b>' + esc(mt.name) + '</b>' +
+        '<div class="note small">' + esc(mt.note) + '</div>' +
+        '<div class="note small">单位：' + esc(mt.unit) + ' · ' + (mt.direction === 'up' ? '越高越好' : '越低越好') + '</div></td>' +
+        SIM_KEYS.map(function (k) {
+          var cls = mt.values[k] === best ? 'best' : (mt.values[k] === worst ? 'worst' : '');
+          return '<td class="num ' + cls + '">' + valCell(mt, k) + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+    return '<table class="tbl sim-tbl"><caption>' + esc(caption) + '</caption>' +
+      '<thead><tr><th>指标</th>' +
+      '<th class="num">S0 现状基准</th><th class="num">S1 AI 上报</th>' +
+      '<th class="num">S2 +透明反馈</th><th class="num">S3 +差异化激励</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
+  }
 
   var toastTimer = null;
   function toast(msg) {
@@ -116,8 +178,12 @@
             : '人工转交给「' + seed.decision.owner + '」';
         tl.push({ at: seed.decision.decidedAt, actor: '治理人员', text: label, kind: 'human' });
         if (act === 'dispatch') {
-          tl.push({ at: seed.decision.decidedAt, actor: '处置主体', text: '已接收工单，进入处置', kind: 'owner' });
+          // 状态机：人工确认分派（dispatched）→ 处置主体接单（processing）。
+          // 种子工单按最终状态补全节点，避免出现「状态已分派但时间轴没有分派记录」的矛盾。
           tl.push({ at: seed.decision.decidedAt, actor: '系统反馈', text: '已向上报人推送责任主体与处理进度', kind: 'feedback' });
+          if (seed.status !== 'dispatched') {
+            tl.push({ at: seed.decision.decidedAt, actor: '处置主体', text: '已接收工单，进入处置', kind: 'owner' });
+          }
         } else if (act === 'need_info') {
           tl.push({ at: seed.decision.decidedAt, actor: '系统反馈', text: '已向上报人推送待补充事项', kind: 'feedback' });
         } else if (act === 'transfer') {
@@ -235,6 +301,21 @@
         };
       }
     }
+    if (state.route.name === 'rider-emergency-confirm' && q.input === 'emergency') {
+      // 演示用：直接载入一条紧急线索，便于录屏与截图展示完整留存页
+      var exists = state.tickets.some(function (t) { return t.emergency; });
+      if (!exists) {
+        var ep = D.DEMO_INPUTS.emergency;
+        var pipe = E.runPipeline({
+          rawText: ep.rawText, location: ep.location, hasPhoto: true, channel: ep.channel
+        }, state.tickets);
+        var et = E.buildTicket(pipe, {
+          channel: ep.channel, location: ep.location, photoLabel: ep.photoLabel
+        }, state.tickets.map(function (t) { return t.id; }), 0);
+        state.tickets.unshift(et);
+        state.activeTicketId = et.id;
+      }
+    }
     if (state.route.name === 'gov-events' && state.route.params.id) {
       state.activeTicketId = state.route.params.id;
     }
@@ -250,6 +331,7 @@
     if (name === 'rider-home') main.innerHTML = viewRiderHome();
     else if (name === 'rider-report') main.innerHTML = viewRiderReport();
     else if (name === 'rider-ai-review') main.innerHTML = viewRiderReview();
+    else if (name === 'rider-emergency-confirm') main.innerHTML = viewRiderEmergencyConfirm();
     else if (name === 'rider-progress') main.innerHTML = viewRiderProgress();
     else if (name === 'rider-services') main.innerHTML = viewRiderServices();
     else if (name === 'gov-events') main.innerHTML = viewGovEvents();
@@ -274,14 +356,17 @@
         ' · 当前工单 ' + (state.activeTicketId || '—') +
         ' · 工单数 ' + state.tickets.length +
         ' · 情景 ' + state.scenario +
-        ' · 数据来源 虚构/脱敏演示数据';
+        ' · 仿真数据 第一轮 20 次重复（AI2-simulation）' +
+        ' · 产品数据 虚构/脱敏演示数据';
     }
   }
 
   function titleOf(name) {
     return ({
       'rider-home': '骑手端 · 首页', 'rider-report': '骑手端 · 一键上报',
-      'rider-ai-review': '骑手端 · AI 识别与确认', 'rider-progress': '骑手端 · 处理进度与结果',
+      'rider-ai-review': '骑手端 · AI 识别与确认',
+      'rider-emergency-confirm': '骑手端 · 紧急事件已留存线索',
+      'rider-progress': '骑手端 · 处理进度与结果',
       'rider-services': '骑手端 · 服务查询', 'gov-events': '治理端 · 事件列表',
       'gov-map': '治理端 · 事件地图', 'gov-metrics': '治理端 · 核心指标概览',
       'sim-compare': '仿真端 · S0–S3 情景对比', 'sim-config': '仿真端 · 参数与假设',
@@ -422,7 +507,7 @@
     ai_processing: { label: '待确认', cls: 'wait' },
     submitted: { label: '已受理', cls: '' },
     need_info: { label: '需补充信息', cls: 'wait' },
-    dispatched: { label: '已分派', cls: '' },
+    dispatched: { label: '已分派（待处置主体接单）', cls: '' },
     processing: { label: '处置中', cls: '' },
     resolved: { label: '已办结', cls: 'done' },
     transferred: { label: '已转交', cls: '' },
@@ -478,13 +563,16 @@
       '<textarea class="field" id="rawText" rows="3" placeholder="例如：位置、时间、影响范围、是否有人受伤…">' + esc(r.rawText) + '</textarea>' +
 
       '<div class="divider"></div>' +
+      consentSummaryCard() +
+      (state.consentModal ? consentModal() : '') +
       '<div class="btn-row">' +
       '<button class="btn small ghost" data-quick="normal">快速示例：普通事件</button>' +
       '<button class="btn small ghost" data-quick="emergency">快速示例：紧急事件</button>' +
       '</div>' +
       '<div style="height:12px"></div>' +
       '<button class="btn primary wide" id="btnAnalyze"' + (canAnalyze ? '' : ' disabled') + '>AI 识别并生成确认页 ›</button>' +
-      '<div class="note small" style="margin-top:8px">提交前必须经过 AI 识别与你的确认。AI 只提供建议，你可以修改类别和描述。</div>';
+      '<div class="note small" style="margin-top:8px">提交前必须经过 AI 识别与你的确认。AI 只提供建议，你可以修改类别与描述。</div>' +
+      appealBox();
 
     var html = '<div class="shell rider-shell">' + phoneShell(
       '<div><div class="title">一键上报</div><div class="sub">语音 / 照片 / 位置 / 文字</div></div>' +
@@ -495,8 +583,58 @@
     return html;
   }
 
-  function photoSvg(label) {
-    return '<svg viewBox="0 0 320 180" width="100%" height="100%" role="img" aria-label="演示图片">' +
+  /* --------------------------------------------- 数据用途告知与单独同意（T-14）
+   * 依据 AI 1 的法律分析：位置属行踪轨迹（个保法第 28 条敏感个人信息），
+   * 处理需单独同意（第 29 条）并履行告知义务（第 17 条）。
+   * 原型不采集真实录音、不调用真实定位、不涉及本地文件选择，
+   * 因此此处的同意流程是设计演示，不是真实数据授权。
+   */
+  function consentSummaryCard() {
+    return '<div class="card tight" style="margin-bottom:10px">' +
+      '<div class="card-head"><h3>数据用途与同意</h3><span class="spacer"></span>' +
+      '<span class="badge ' + (state.consent ? 'risk-low' : 'risk-medium') + '">' +
+      (state.consent ? '本次会话已确认' : '未确认') + '</span></div>' +
+      '<div class="note small">本原型不采集真实录音、不调用真实定位、不涉及本地文件选择，' +
+      '位置只到网格级，因此<b>不产生真实的个人信息处理</b>。</div>' +
+      '<div class="note small" style="margin-top:4px">以下是部署阶段的告知与单独同意设计。' +
+      '真实上线时，位置（行踪轨迹）属敏感个人信息，需单独同意与明示告知。</div>' +
+      '<div style="height:8px"></div>' +
+      '<button class="btn small" id="btnConsentOpen">查看数据用途与单独同意</button>' +
+      '</div>';
+  }
+
+  function consentModal() {
+    var c = state.consentDraft || { a: false, b: false, c: false };
+    return '<div class="modal-mask" id="consentMask"><div class="modal">' +
+      '<h3>数据用途与单独同意</h3>' +
+      '<div class="note small" style="margin:6px 0 12px">请逐项确认。第三项为位置信息（行踪轨迹）的单独同意。</div>' +
+      consentItem('ckA', 'a', c.a, '处理目的与范围', '仅用于生成治理线索与反馈处理进度，不用于任何商业用途，不用于考核个人。', false) +
+      consentItem('ckB', 'b', c.b, '最小必要与留存', '只采集问题点位所在的网格级位置；不持续追踪轨迹；语音即转即弃、不保存原始音频。', false) +
+      consentItem('ckC', 'c', c.c, '位置信息的单独同意（敏感个人信息）', '位置信息属行踪轨迹。我单独同意在本次上报中使用网格级位置；我可随时撤回，撤回不影响此前已完成的处理。', true) +
+      '<div class="note small">撤回方式与人工复核：可在「我的上报」中删除线索或联系治理人员复核；AI 输出仅作为建议，最终分派由人工决定。</div>' +
+      '<div class="btn-row" style="margin-top:12px">' +
+      '<button class="btn ghost" id="btnConsentCancel">取消</button>' +
+      '<button class="btn primary" id="btnConsentOk"' + (c.a && c.b && c.c ? '' : ' disabled') + '>确认并继续</button>' +
+      '</div></div></div>';
+  }
+
+  function consentItem(id, key, checked, title, desc, required) {
+    return '<label class="consent-item' + (required ? ' required' : '') + '">' +
+      '<input type="checkbox" id="' + id + '" data-consent="' + key + '"' + (checked ? ' checked' : '') + '>' +
+      '<span><span class="t">' + esc(title) + (required ? '（单独同意）' : '') + '</span>' +
+      '<span class="s" style="display:block">' + esc(desc) + '</span></span></label>';
+  }
+
+  function appealBox() {
+    return '<div class="appeal-box" style="margin-top:12px">' +
+      '<b>申诉与举报入口（设计占位）</b>' +
+      '<div class="note small">对 AI 识别结果、分派决定或激励计分有异议时，可提交申诉；' +
+      '平台需公布处理流程与反馈时限。本原型不提供真实提交通道，仅展示入口设计。</div>' +
+      '<div class="btn-row" style="margin-top:8px"><button class="btn small ghost" id="btnAppeal">提交申诉（演示）</button>' +
+      '<span class="note small">正式上线时需给出受理主体与时限</span></div></div>';
+  }
+
+  function photoSvg(label) {    return '<svg viewBox="0 0 320 180" width="100%" height="100%" role="img" aria-label="演示图片">' +
       '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0" stop-color="#dfe8f2"/><stop offset="1" stop-color="#f2f4f7"/></linearGradient></defs>' +
       '<rect width="320" height="180" fill="url(#sky)"/>' +
@@ -583,11 +721,45 @@
       }, state.tickets);
       go('#/rider/ai-review');
     });
+
+    /* ---- 数据用途告知与单独同意（设计演示，不阻断演示流程）---- */
+    var open = $('#btnConsentOpen');
+    if (open) open.addEventListener('click', function () {
+      state.consentModal = true;
+      state.consentDraft = { a: false, b: false, c: false };
+      render();
+    });
+    var cancel = $('#btnConsentCancel');
+    if (cancel) cancel.addEventListener('click', function () { state.consentModal = false; render(); });
+    $$('[data-consent]').forEach(function (el) {
+      el.addEventListener('change', function () {
+        state.consentDraft[this.getAttribute('data-consent')] = this.checked;
+        var d = state.consentDraft;
+        var ok = $('#btnConsentOk');
+        if (ok) ok.disabled = !(d.a && d.b && d.c);
+      });
+    });
+    var okBtn = $('#btnConsentOk');
+    if (okBtn) okBtn.addEventListener('click', function () {
+      state.consent = true;
+      state.consentModal = false;
+      render();
+      toast('已确认数据用途与单独同意（演示，不涉及真实数据授权）');
+    });
+    var mask = $('#consentMask');
+    if (mask) mask.addEventListener('click', function (e) {
+      if (e.target === mask) { state.consentModal = false; render(); }
+    });
+    var appeal = $('#btnAppeal');
+    if (appeal) appeal.addEventListener('click', function () {
+      toast('申诉入口为设计占位，正式上线时需给出受理主体与反馈时限');
+    });
   }
 
   /* -------------------------------------------------- AI 识别与确认页 */
 
   function viewRiderReview() {
+    state.editingDesc = false;
     if (!state.review) {
       state.review = E.runPipeline(D.DEMO_INPUTS.normal, state.tickets);
       state.reviewInput = 'normal';
@@ -609,7 +781,17 @@
         : '<span class="badge ghost">未命中个人敏感信息</span>') + '</div>' +
       '<div class="note small" style="margin-top:6px">' + esc(des.ruleCount > 0
         ? '共命中 ' + des.ruleCount + ' 条脱敏规则：手机号保留前三后二、车牌保留省份简称、精确门牌降到楼栋级'
-        : '本段描述未识别出手机号、车牌、身份证、联系方式或精确门牌') + '</div></div>' +
+        : '本段描述未识别出手机号、车牌、身份证、联系方式或精确门牌') + '</div>' +
+      '<div class="divider"></div>' +
+      (state.editingDesc
+        ? '<div class="small" style="font-weight:700;margin-bottom:4px">修改描述</div>' +
+        '<textarea class="field" id="descInput" rows="4">' + esc(rv.desensitized.text) + '</textarea>' +
+        '<div class="btn-row" style="margin-top:8px"><button class="btn small ghost" id="btnCancelDesc">取消</button>' +
+        '<button class="btn small primary" id="btnSaveDesc">保存修改</button></div>' +
+        '<div class="note small" style="margin-top:6px">保存后会重新执行脱敏与结构化，并在治理端标记「上报人已修改」。</div>'
+        : '<div class="btn-row"><button class="btn small" id="btnEditDesc">修改描述</button>' +
+        '<span class="note small">' + (rv.descModified ? '<span class="badge risk-medium">上报人已修改</span>' : 'AI 生成的描述可能有偏差，你可以直接改') + '</span></div>') +
+      '</div>' +
 
       '<div class="card tight"><div class="card-head"><h3>② 结构化要素</h3><span class="spacer"></span>' +
       '<span class="badge ai">AI 处理</span></div>' +
@@ -671,7 +853,11 @@
       '<button class="btn ' + (emergency ? 'danger' : 'primary') + '" id="btnSubmit">' +
       (emergency ? '我已联系法定渠道，继续留存线索' : '确认并提交') + '</button>' +
       '</div>' +
-      '<div class="note small" style="margin-top:8px">提交即表示你确认以上 AI 识别结果。脱敏在提交前完成，治理人员看到的是脱敏后的描述。</div>';
+      '<div class="note small" style="margin-top:8px">提交即表示你确认以上 AI 识别结果。脱敏在提交前完成，治理人员看到的是脱敏后的描述。</div>' +
+      '<div class="note small" style="margin-top:6px">' +
+      '<span class="ai-label-badge">AI 生成</span> 本页的上报摘要、类别建议与图像标签由 AI 生成，已在界面显著标注；' +
+      '音频转写为预置演示文本、图片为内置演示图，均不涉及真实素材。</div>' +
+      appealBox();
 
     var html = '<div class="shell rider-shell">' + phoneShell(
       '<div><div class="title">AI 识别与确认</div><div class="sub">第 2 步 / 共 3 步 · 请核对后再提交</div></div>' +
@@ -729,7 +915,7 @@
         channel: state.report.inputKind === 'duplicate' ? 'mixed' : (state.report.hasPhoto ? 'mixed' : 'text'),
         location: state.report.location,
         photoLabel: state.report.photoLabel,
-        modifiedByReporter: rv.category.reason.indexOf('上报人手动修改') !== -1
+        modifiedByReporter: rv.category.reason.indexOf('上报人手动修改') !== -1 || !!rv.descModified
       };
       var ticket = E.buildTicket(rv, input, ids, 0);
       state.tickets.unshift(ticket);
@@ -737,14 +923,90 @@
       persist();
       if (ticket.emergency) {
         toast('紧急线索已留存。请确认已联系 110 / 119 / 120 / 122。');
+        go('#/rider/emergency-confirm');
       } else {
         toast('已提交工单 ' + ticket.id + '（演示）');
+        go('#/rider/progress');
       }
-      go('#/rider/progress');
+    });
+
+    /* ---- 上报人可修改描述（治理端会显示「上报人已修改」）---- */
+    var edit = $('#btnEditDesc');
+    if (edit) edit.addEventListener('click', function () {
+      state.editingDesc = true; render();
+    });
+    var cancelEdit = $('#btnCancelDesc');
+    if (cancelEdit) cancelEdit.addEventListener('click', function () {
+      state.editingDesc = false; render();
+    });
+    var saveDesc = $('#btnSaveDesc');
+    if (saveDesc) saveDesc.addEventListener('click', function () {
+      var ta = $('#descInput');
+      var v = ta ? ta.value.trim() : '';
+      if (!v) { toast('描述不能为空'); return; }
+      state.review.rawText = v;
+      state.review.desensitized = E.desensitize(v);
+      state.review.structured = E.structure(state.review.desensitized.text, {
+        location: state.report.location, time: E.DEMO_NOW,
+        reporter: D.RIDER_PROFILE.id + ' · ' + D.RIDER_PROFILE.name, hasPhoto: state.report.hasPhoto
+      });
+      state.review.descModified = true;
+      state.editingDesc = false;
+      state.report.rawText = v;
+      render();
+      toast('已保存你修改后的描述（将标记为「上报人已修改」）');
     });
   }
 
   /* ------------------------------------------------------- 进度与结果页 */
+
+  /* 紧急线索留存确认页（T-15：紧急事件提交后不进入普通工单进度视图） */
+  function viewRiderEmergencyConfirm() {
+    var t = null;
+    for (var i = 0; i < state.tickets.length; i++) {
+      if (state.tickets[i].emergency) { t = state.tickets[i]; break; }
+    }
+    var body =
+      '<div class="emergency-card">' +
+      '<h3>⚠️ 紧急事件：请以法定应急渠道为准</h3>' +
+      '<div class="warn-line">严重事故、火灾或治安事件请立即拨打下列号码。本平台不替代法定应急渠道。</div>' +
+      '<div class="hotline-grid">' +
+      hotline('110', '治安、纠纷、可疑人员') +
+      hotline('119', '火灾、被困、危险品泄漏') +
+      hotline('120', '人员受伤、身体不适') +
+      hotline('122', '道路交通事故') +
+      '</div>' +
+      '<div class="note small">平台不会自动报警、不会自动拨打、不会自动派单，也不会对此类事件作出处置决定。</div>' +
+      '</div>' +
+
+      '<div class="card tight"><div class="card-head"><h3>平台留存记录</h3><span class="spacer"></span>' +
+      (t ? statusBadge(t) : '<span class="badge ghost">无紧急线索</span>') + '</div>' +
+      (t
+        ? '<dl class="kv">' +
+        '<dt>工单号</dt><dd class="mono">' + esc(t.id) + '</dd>' +
+        '<dt>类别</dt><dd>' + esc(t.categoryName) + ' <span class="badge ghost">AI 建议</span></dd>' +
+        '<dt>风险</dt><dd>' + esc(t.riskLabel) + '</dd>' +
+        '<dt>位置</dt><dd>' + esc(locLabel(t.location)) + '</dd>' +
+        '<dt>脱敏描述</dt><dd>' + esc(t.desensitized ? t.desensitized.text : t.rawText) + '</dd>' +
+        '</dl>' +
+        '<div class="note small" style="margin-top:8px">该线索不进入普通分派与办结流程，仅用于治理记录与后续分析；' +
+        '如需更正或删除，可在申诉入口提出。</div>'
+        : '<div class="note small">当前没有紧急级别的线索。</div>') +
+      '</div>' +
+
+      '<div class="note info small">为什么单独一页：紧急事件与普通城市问题事项的处理路径不同。' +
+      '普通事项走「AI 建议 → 人工确认 → 处置反馈」，紧急事件只提示法定渠道并留存线索。</div>' +
+
+      '<div class="btn-row" style="margin-top:12px">' +
+      '<button class="btn ghost" data-nav="#/rider/home">返回首页</button>' +
+      '<button class="btn" data-nav="#/rider/progress">查看我的其他上报</button>' +
+      '</div>';
+
+    return '<div class="shell rider-shell">' + phoneShell(
+      '<div><div class="title">紧急事件 · 已留存线索</div><div class="sub">不进入普通工单流程</div></div>' +
+      '<span class="spacer"></span><span class="badge risk-emergency">紧急</span>',
+      body, 'report') + '</div>';
+  }
 
   function viewRiderProgress() {
     var mine = state.tickets.filter(function (t) { return t.reporter.indexOf(D.RIDER_PROFILE.id) === 0; });
@@ -1247,40 +1509,44 @@
     var sim = D.SIM_RESULTS;
 
     var demoMetrics =
-      metricCard('有效上报率', m.effectiveReportRate + '%', '', '演示口径：(总上报 - 疑似重复) / 总上报，基于 ' + m.total + ' 条示例工单', 'up') +
-      metricCard('重复或无效上报率', m.duplicateOrInvalidRate + '%', '', '演示口径：疑似重复工单占比', 'down') +
-      metricCard('工单分派准确率', (m.dispatchAccuracy === null ? '—' : m.dispatchAccuracy + '%'), '', '演示口径：已分派工单中未被退回的比例', 'up') +
-      metricCard('平均处置时间', (m.avgHandlingHours === null ? '—' : m.avgHandlingHours), '小时', '演示口径：示例工单受理到办结的平均时长', 'down') +
-      metricCard('参与者时间成本', '1.8', '分钟', '占位估计：以演示流程步数换算，非实测', '') +
-      metricCard('参与差距', '—', '百分点', '待仿真结果：需按群体分组计算', '');
+      metricCard('有效上报率', m.effectiveReportRate + '%', '', '演示口径：(总上报 − 疑似重复) / 总上报，基于 ' + m.total + ' 条示例工单', 'up') +
+      metricCard('重复或无效上报率', m.duplicateOrInvalidRate + '%', '', '演示口径：疑似重复工单占比（本口径未含无效上报）', 'down') +
+      metricCard('工单分派准确率', (m.dispatchAccuracy === null ? '—' : m.dispatchAccuracy + '%'), '', '演示口径：已分派工单中未被退回的比例；样本仅 ' + m.total + ' 条，不具统计意义', 'up') +
+      metricCard('平均处置时间', (m.avgHandlingHours === null ? '—' : m.avgHandlingHours), '小时', '演示口径：示例工单上报到办结的平均时长', 'down') +
+      metricCard('平均上报耗时', '—', '分钟', '不在此处计算：由仿真侧给出，见右栏与仿真端（第一轮为 3.00 分钟）', '') +
+      metricCard('群体参与差距', '—', '百分点', '不在此处计算：由仿真侧按骑手与司机两类给出', '');
 
-    var simRows = sim.metrics.map(function (mt) {
-      return '<tr><td>' + esc(mt.name) + '<div class="note small">' + esc(mt.note) + '</div></td>' +
-        '<td class="num">' + ph(fmtVal(mt.values.S0, mt.unit)) + '</td>' +
-        '<td class="num">' + ph(fmtVal(mt.values.S1, mt.unit)) + '</td>' +
-        '<td class="num">' + ph(fmtVal(mt.values.S2, mt.unit)) + '</td>' +
-        '<td class="num">' + ph(fmtVal(mt.values.S3, mt.unit)) + '</td></tr>';
+    var groups = sim.groups.map(function (g) {
+      return '<tr><td>' + esc(g.name) + '</td>' +
+        SIM_KEYS.map(function (k) { return '<td class="num">' + num(g.values[k]) + '%</td>'; }).join('') + '</tr>';
     }).join('');
 
-    var html = '<div class="shell">' +
-      govHeader('治理端 · 核心指标概览', '区分「已可演示口径」与「待仿真结果」两类指标，避免把占位数据当作结论。',
+    return '<div class="shell">' +
+      govHeader('治理端 · 核心指标概览', '区分「原型演示口径」与「仿真实验口径」两类指标：前者用于演示指标如何计算，后者才是实验证据。',
         '<div class="btn-row"><a class="btn small" href="#/gov/events">事件列表</a>' +
         '<a class="btn small" href="#/gov/map">地图视图</a>' +
         '<a class="btn small primary" href="#/sim/compare">仿真对比</a></div>') +
 
-      '<div class="card"><div class="card-head"><h3>① 已可演示口径</h3><span class="spacer"></span>' +
+      '<div class="card"><div class="card-head"><h3>① 原型演示口径</h3><span class="spacer"></span>' +
       '<span class="badge ghost">基于原型内置示例工单</span></div>' +
-      '<div class="note small" style="margin-bottom:10px">' + esc(m.scope) + '。这些数字随你在原型中的操作实时变化，用于演示指标如何被计算，不代表真实城市治理统计。</div>' +
+      '<div class="note small" style="margin-bottom:10px">' + esc(m.scope) + '。这些数字随你在原型中的操作实时变化，用于说明指标如何被计算，<b>不代表真实城市治理统计，也不代表仿真结果</b>。</div>' +
       '<div class="metric-grid">' + demoMetrics + '</div>' +
+      '<div class="note small" style="margin-top:8px">说明：原型的示例工单只有 ' + m.total + ' 条，分派准确率等比例指标容易得到失真的极端值，因此报告与视频不引用这些数值，只引用其口径。</div>' +
       '</div>' +
 
-      '<div class="card placeholder-card">' +
-      '<div class="card-head"><h3>② 待仿真结果（占位）</h3><span class="spacer"></span>' +
-      '<span class="badge ph">' + E.PLACEHOLDER_PREFIX + '</span></div>' +
-      '<div class="ph-banner"><span class="mono">' + E.PLACEHOLDER_PREFIX + '</span><span>占位数据，不是实验结果。S0–S3 对比值将在社会仿真实验完成后替换。</span></div>' +
-      '<table class="tbl"><caption>六项固定指标 · 情景对比（每格均为占位数据）</caption>' +
-      '<thead><tr><th>指标</th><th class="num">S0</th><th class="num">S1</th><th class="num">S2</th><th class="num">S3</th></tr></thead>' +
-      '<tbody>' + simRows + '</tbody></table>' +
+      '<div class="card">' +
+      '<div class="card-head"><h3>② 仿真实验口径（第一轮结果）</h3><span class="spacer"></span>' +
+      '<span class="badge ghost">' + esc(sim.dataSource) + '</span></div>' +
+      '<div class="result-banner"><span class="mono">' + esc(sim.round) + '</span>' +
+      '<span>以下为第一轮合成仿真结果（每情景 20 次重复）。在当前项目假设下得出，不是现实统计或政策效果证明。</span></div>' +
+      simMetricTable(sim, '六项固定指标 · 情景对比（含 95% 区间）') +
+      simLegend(sim) +
+      '<div class="divider"></div>' +
+      '<div class="small" style="font-weight:700;margin-bottom:6px">分群体参与率</div>' +
+      '<table class="tbl"><thead><tr><th>群体</th><th class="num">S0</th><th class="num">S1</th><th class="num">S2</th><th class="num">S3</th></tr></thead>' +
+      '<tbody>' + groups + '</tbody></table>' +
+      '<div class="note small" style="margin-top:6px">' + esc(sim.groupNote) + '</div>' +
+      '<div class="note warn small" style="margin-top:6px">' + esc(sim.groupCaveat) + '</div>' +
       '<div class="btn-row" style="margin-top:10px"><a class="btn small" href="#/sim/compare">查看完整仿真对比页 ›</a></div>' +
       '</div>' +
 
@@ -1291,10 +1557,11 @@
           '<td>' + (mt.direction === 'up' ? '越高越好' : '越低越好') + '</td>' +
           '<td class="small">' + esc(mt.note) + '</td></tr>';
       }).join('') + '</tbody></table>' +
-      '<div class="note small" style="margin-top:8px">六项固定指标与冻结底稿一致；补充观察项（持续参与意愿指数）单独展示，不计入六项对比。</div>' +
+      '<div class="note small" style="margin-top:8px">六项固定指标与冻结底稿一致。' +
+      '注：框架原指标名「参与者时间成本」在本轮实测中只覆盖上报环节，故报告与界面统一表述为「平均上报耗时」；' +
+      '框架原指标名「不同新就业群体参与差距」在本轮只有骑手与司机两类群体，故表述为两类之差而非多群体极差。</div>' +
+      simPendingCard(sim) +
       '</div></div>';
-
-    return html;
   }
 
   /* ============================================================== 仿真端视图 */
@@ -1318,43 +1585,40 @@
         '</button>';
     }).join('');
 
-    var rows = sim.metrics.map(function (mt) {
-      var vals = mt.values;
-      var arr = ['S0', 'S1', 'S2', 'S3'].map(function (k) { return vals[k]; });
-      var best = mt.direction === 'up' ? Math.max.apply(null, arr) : Math.min.apply(null, arr);
-      var worst = mt.direction === 'up' ? Math.min.apply(null, arr) : Math.max.apply(null, arr);
-      return '<tr><td><b>' + esc(mt.name) + '</b><div class="note small">' + esc(mt.note) + ' · 单位：' + esc(mt.unit) +
-        ' · ' + (mt.direction === 'up' ? '越高越好' : '越低越好') + '</div></td>' +
-        ['S0', 'S1', 'S2', 'S3'].map(function (k) {
-          var cls = vals[k] === best ? 'best' : (vals[k] === worst ? 'worst' : '');
-          return '<td class="num ' + cls + '">' + ph(vals[k]) + '</td>';
-        }).join('') + '</tr>';
-    }).join('');
-
     var supRows = sim.supplementary.map(function (mt) {
-      return '<tr><td>' + esc(mt.name) + '<div class="note small">不计入六项固定指标</div></td>' +
-        ['S0', 'S1', 'S2', 'S3'].map(function (k) { return '<td class="num">' + ph(mt.values[k]) + '</td>'; }).join('') + '</tr>';
+      return '<tr><td>' + esc(mt.name) + '<div class="note small">' + esc(mt.note) + '</div></td>' +
+        SIM_KEYS.map(function (k) { return '<td class="num">' + num(mt.values[k]) + '%</td>'; }).join('') + '</tr>';
     }).join('');
 
-    var groupMax = 100;
+    var groupMax = sim.groupMax || 60;
     var groupBlock = sim.groups.map(function (g) {
-      return '<div style="margin-bottom:9px"><div class="row1" style="display:flex;gap:6px;align-items:center">' +
-        '<b class="small">' + esc(g.name) + '</b><span class="spacer" style="flex:1"></span>' +
-        '<span class="note small">S0 ' + ph(g.values.S0) + ' → S3 ' + ph(g.values.S3) + '</span></div>' +
-        ['S0', 'S1', 'S2', 'S3'].map(function (k) {
-          return '<div class="bar" style="margin-top:3px"><i style="width:' + Math.round((g.values[k] / groupMax) * 100) + '%;background:' +
+      return '<div style="margin-bottom:10px"><div style="display:flex;gap:6px;align-items:center">' +
+        '<b class="small">' + esc(g.name) + '</b><span style="flex:1"></span>' +
+        '<span class="note small">S0 ' + num(g.values.S0) + '% → S3 ' + num(g.values.S3) + '%</span></div>' +
+        SIM_KEYS.map(function (k) {
+          return '<div class="bar" style="margin-top:3px" title="' + k + ' ' + num(g.values[k]) + '%">' +
+            '<i style="width:' + Math.min(100, Math.round((g.values[k] / groupMax) * 100)) + '%;background:' +
             ({ S0: '#98a0a8', S1: '#8fb8e0', S2: '#f5b323', S3: '#1f9d6b' })[k] + '"></i></div>';
         }).join('') +
         '</div>';
     }).join('');
 
+    var pairedRows = sim.pairedEffects.map(function (p) {
+      return '<tr><td class="mono">' + esc(p.transition) + '</td><td>' + esc(p.metric) + '</td>' +
+        '<td class="num">' + esc(p.diff) + '</td><td class="num">' + esc(p.ci) + '</td>' +
+        '<td class="small">' + (p.crossesZero
+          ? '<span class="badge risk-medium">区间跨 0</span> ' + esc(p.caveat)
+          : '区间不含 0' + (p.caveat ? '；' + esc(p.caveat) : '')) + '</td></tr>';
+    }).join('');
+
     return '<div class="shell">' +
-      govHeader('仿真端 · S0–S3 情景对比', '比较四组治理机制；情景之间只改变约定的治理机制，其余参数保持一致。',
+      govHeader('仿真端 · S0–S3 情景对比', '比较四组治理机制；情景之间只改变约定的治理机制，其余参数保持一致（S1→S2 例外，见下）。',
         '<div class="btn-row"><a class="btn small" href="#/sim/config">参数与假设</a>' +
         '<a class="btn small" href="#/sim/limits">结果局限</a></div>') +
 
-      '<div class="ph-banner"><span class="mono">' + E.PLACEHOLDER_PREFIX + '</span>' +
-      '<span>占位数据，不是实验结果。本页全部数值用于演示界面结构与指标口径，必须由社会仿真实验的最终结果替换。</span></div>' +
+      '<div class="result-banner"><span class="mono">' + esc(sim.dataSource) + ' · ' + esc(sim.round) + '</span>' +
+      '<span>本页数值为第一轮合成仿真结果（每情景 20 次重复、240 名合成从业者、56 个模拟日）。' +
+      '在当前项目假设下得出，<b>不是现实统计或政策效果证明</b>，不得作为因果结论引用。</span></div>' +
 
       '<div class="scenario-grid" style="margin-bottom:14px">' + cards + '</div>' +
 
@@ -1366,58 +1630,74 @@
       }).join('') + '</div></div>' +
 
       '<div class="card"><div class="card-head"><h3>六项固定指标对比</h3><span class="spacer"></span>' +
-      '<span class="badge ph">每格均为占位</span></div>' +
-      '<table class="tbl"><caption>绿色为该行方向上的占位最优值，红色为占位最差值；颜色仅用于界面演示，不构成结论。</caption>' +
-      '<thead><tr><th>指标</th><th class="num">S0 现状基准</th><th class="num">S1 AI 上报</th>' +
-      '<th class="num">S2 +透明反馈</th><th class="num">S3 +差异化激励</th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>' +
-      '<div class="note small" style="margin-top:8px">所有数值前缀为 <span class="mono">PLACEHOLDER_SIM_RESULT</span>，表示占位。' +
-      '其中参与者时间成本在 S2、S3 的占位值高于 S1，用于提示透明反馈与激励可能带来的额外操作成本，该现象需由仿真验证。</div></div>' +
+      '<span class="badge ghost">第一轮结果 · 含 95% 区间</span></div>' +
+      simMetricTable(sim, '绿色为该行方向上的最优值，红色为最差值；颜色仅用于阅读辅助，不构成结论。') +
+      simLegend(sim) +
+      '<div class="note small" style="margin-top:8px">' +
+      '<b>两点必须同时说明：</b>① 平均上报耗时在 S1–S3 的原值分别为 2.9973、2.9962、3.0027 分钟，显示为两位小数后都变成 3.00，' +
+      '因此不能据此说「激励进一步降低时间成本」或「透明反馈增加了时间成本」；' +
+      '② 群体参与差距在 S0 至 S2 由 1.19 扩大到 2.81 个百分点，S2→S3 的变化为 −0.03 个百分点且 95% 区间跨越 0，' +
+      '不能宣称差异化激励缩小了参与差距。</div></div>' +
 
       '<div class="cols c2">' +
-      '<div class="card"><div class="card-head"><h3>不同新就业群体参与率（占位）</h3></div>' +
+      '<div class="card"><div class="card-head"><h3>分群体参与率（仅两类群体）</h3></div>' +
       groupBlock +
-      '<div class="note small">分组口径（早高峰骑手、夜间骑手、网约车司机、兼职骑手）为演示分组，须由 AI 2 在模型说明中固定后替换。</div></div>' +
-      '<div class="card placeholder-card"><div class="card-head"><h3>结论（占位）</h3><span class="spacer"></span>' +
-      '<span class="badge ph">' + E.PLACEHOLDER_PREFIX + '</span></div>' +
-      '<div class="note small">' + esc(sim.conclusion) + '</div>' +
+      '<div class="note small">' + esc(sim.groupNote) + '</div>' +
+      '<div class="note warn small" style="margin-top:6px">' + esc(sim.groupCaveat) + '</div></div>' +
+      '<div class="card"><div class="card-head"><h3>结论（当前假设下）</h3><span class="spacer"></span>' +
+      '<span class="badge ghost">模型显示</span></div>' +
+      '<div class="small">' + esc(sim.conclusion) + '</div>' +
       '<div class="divider"></div>' +
-      '<div class="small"><b>替换要求</b></div>' +
-      '<div class="note small">① 结论必须写成「模型显示」或「在当前假设下」，不得写成现实证明；' +
-      '② 需注明重复运行次数与波动范围；③ 需与 simulation/results/final-summary.md 一致。</div>' +
+      '<div class="note small"><b>解释边界：</b>结论只写成「模型显示」或「在当前项目假设下」，不得写成现实证明；' +
+      '需同时给出重复运行次数与波动范围；不得使用「显著」等统计显著表述（本轮未做显著性检验）。</div>' +
       '</div></div>' +
 
-      '<div class="card"><div class="card-head"><h3>补充观察项</h3></div>' +
+      '<div class="card"><div class="card-head"><h3>递进机制的配对效应</h3><span class="spacer"></span>' +
+      '<span class="badge ghost">配对共同随机数 · 20 次配对</span></div>' +
+      '<table class="tbl"><thead><tr><th>机制变化</th><th>指标</th><th class="num">平均差</th><th class="num">95% 区间</th><th>解释</th></tr></thead>' +
+      '<tbody>' + pairedRows + '</tbody></table>' +
+      '<div class="note small" style="margin-top:8px">区间跨越 0 的项不得表述为「有效应」或「缩小了差距」。' +
+      'S1→S2 的处置时间改善还包含基础处置时长参数的调整，不应全部归因于透明反馈。</div></div>' +
+
+      '<div class="card"><div class="card-head"><h3>辅助指标</h3><span class="spacer"></span>' +
+      '<span class="badge ghost">不计入六项固定指标</span></div>' +
       '<table class="tbl"><thead><tr><th>指标</th><th class="num">S0</th><th class="num">S1</th><th class="num">S2</th><th class="num">S3</th></tr></thead>' +
       '<tbody>' + supRows + '</tbody></table>' +
-      '<div class="note small" style="margin-top:6px">持续参与意愿来自核心研究问题，但不属于六项固定指标，故单独列出，避免混淆主指标口径。</div></div>' +
+      '<div class="note small" style="margin-top:6px">独立问题覆盖率与最后两周参与率是解释 S3「覆盖扩大、单条有效率略降」的关键证据；' +
+      '工单解决率在 S3 相对 S2 轻微下降且 95% 区间跨越 0。</div></div>' +
+
+      simPendingCard(sim) +
       '</div>';
   }
 
   function viewSimConfig() {
     var sim = D.SIM_RESULTS;
+    var srcCls = function (s) {
+      if (s === '项目假设' || s === '待补') return 'risk-medium';
+      if (s.indexOf('机制') === 0 || s.indexOf('实验') === 0) return 'ghost';
+      return 'risk-low';
+    };
     return '<div class="shell">' +
-      govHeader('仿真端 · 参数与假设', '每个参数标注来源：来自材料 / 机制设定 / 项目假设。',
+      govHeader('仿真端 · 参数与假设', '每个参数标注来源：来自材料 / 机制设定 / 项目假设 / 实验记录 / 待补。',
         '<div class="btn-row"><a class="btn small" href="#/sim/compare">返回对比</a>' +
         '<a class="btn small" href="#/sim/limits">结果局限</a></div>') +
 
-      '<div class="ph-banner"><span class="mono">' + E.PLACEHOLDER_PREFIX + '</span>' +
-      '<span>本页参数为演示占位，尚未与仿真实验的最终参数表对齐。</span></div>' +
+      '<div class="result-banner"><span class="mono">config.json</span>' +
+      '<span>以下参数取自 AI 2 的仿真配置与参数登记表。全部数值参数均登记为项目假设或机制设定，未经总体数据校准。</span></div>' +
 
       '<div class="cols c2">' +
       '<div class="card"><div class="card-head"><h3>参数与假设</h3><span class="spacer"></span>' +
       '<span class="badge ghost">' + D.SIM_PARAMS.length + ' 项</span></div>' +
       '<table class="tbl"><thead><tr><th>参数</th><th>取值</th><th>来源</th><th>影响情景</th><th>说明</th></tr></thead><tbody>' +
       D.SIM_PARAMS.map(function (p) {
-        var cls = p.source === '项目假设' ? 'risk-medium' : 'ghost';
         return '<tr><td>' + esc(p.name) + '<div class="note small mono">' + esc(p.key) + '</div></td>' +
           '<td>' + esc(p.value) + '</td>' +
-          '<td><span class="badge ' + cls + '">' + esc(p.source) + '</span></td>' +
+          '<td><span class="badge ' + srcCls(p.source) + '">' + esc(p.source) + '</span></td>' +
           '<td class="small">' + esc(p.affects) + '</td>' +
           '<td class="small">' + esc(p.note) + '</td></tr>';
       }).join('') + '</tbody></table>' +
       '<div class="note small" style="margin-top:8px">来源标注规则：<b>来自材料</b>（有公开来源或已有调研材料支持，须由 AI 1 核对）、' +
-      '<b>机制设定</b>（由情景定义直接决定）、<b>项目假设</b>（缺少可靠数据，须做敏感性分析）。</div>' +
+      '<b>机制设定</b>（由情景定义直接决定）、<b>项目假设</b>（缺少可靠数据，须做敏感性分析）、<b>待补</b>（尚未产出，不得以估计值代替）。</div>' +
       '<div class="note small">' + esc(sim.assumptionRefs) + '</div></div>' +
 
       '<div>' +
@@ -1426,79 +1706,97 @@
       D.SCENARIOS.map(function (s) {
         return '<tr><td><b>' + s.id + '</b><div class="note small">' + esc(s.name) + '</div></td>' +
           '<td class="small">' + esc(s.added) + '</td>' +
-          '<td class="small">' + (s.id === 'S0' ? '基准组' : '除上表机制外，其余参数与 S0 保持一致') + '</td></tr>';
-      }).join('') + '</tbody></table></div>' +
-
-      '<div class="card"><div class="card-head"><h3>演示参数调整（仅界面演示）</h3></div>' +
-      '<div class="cols c2-even">' +
-      '<div><div class="small">重复运行次数（演示）</div>' +
-      '<input class="field" id="simRepeats" type="number" min="1" max="50" value="' + state.simParams.repeats + '"></div>' +
-      '<div><div class="small">激励强度（演示占比 %）</div>' +
-      '<input class="field" id="simIncentive" type="range" min="0" max="100" value="' + state.simParams.incentive + '"></div>' +
+          '<td class="small">' + (s.id === 'S0' ? '基准组'
+            : (s.id === 'S2' ? '除反馈机制外，基础处置时长参数同时由 36 小时调整为 30 小时' : '除上表机制外，其余参数与 S0 保持一致')) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="note warn small" style="margin-top:8px">单变量限制：S1→S2 同时改变了反馈机制与基础处置时长，因此该步的处置时间改善不能被解释为透明反馈的净效应。该限制已写入报告第 5 章与视频旁白。</div>' +
       '</div>' +
-      '<div class="note warn small" style="margin-top:10px">调整这些控件不会重新计算任何数值，也不会改变占位结果。真实参数调整需由 AI 2 在仿真环境中完成并留下日志。此控件仅用于说明「参数—情景—指标」的关系。</div>' +
-      '<div class="btn-row" style="margin-top:8px"><button class="btn small" id="simParamReset">恢复默认</button>' +
-      '<span class="note small">默认：重复 5 次，激励强度 60%</span></div></div>' +
+
+      '<div class="card"><div class="card-head"><h3>敏感性分析（尚未执行）</h3><span class="spacer"></span>' +
+      '<span class="badge ph">SIM_RESULT_NEEDED_SENSITIVITY</span></div>' +
+      '<table class="tbl"><thead><tr><th>参数</th><th>低</th><th>中（当前）</th><th>高</th></tr></thead><tbody>' +
+      '<tr><td>每日问题遇见概率</td><td class="num">0.10</td><td class="num">0.18</td><td class="num">0.28</td></tr>' +
+      '<tr><td>基线信任整体平移</td><td class="num">−0.15</td><td class="num">0</td><td class="num">+0.15</td></tr>' +
+      '<tr><td>AI 结构化能力</td><td class="num">0.70</td><td class="num">0.88</td><td class="num">0.95</td></tr>' +
+      '<tr><td>反馈送达概率</td><td class="num">0.60</td><td class="num">0.80</td><td class="num">0.92</td></tr>' +
+      '<tr><td>差异化激励强度</td><td class="num">0.20</td><td class="num">0.55</td><td class="num">0.85</td></tr>' +
+      '<tr><td>骑手与司机画像差异</td><td class="num">无差异</td><td class="num">当前假设</td><td class="num">双倍差异</td></tr>' +
+      '</tbody></table>' +
+      '<div class="note warn small" style="margin-top:8px">上述 6 组档位已在实验计划中设计，但<b>尚未执行任何敏感性运行</b>，因此本页不给出敏感性结论。' +
+      '在敏感性分析完成前，不能判断哪些结论对参数取值稳健。</div></div>' +
 
       '<div class="card"><div class="card-head"><h3>机制风险与处理</h3></div>' +
       D.SCENARIO_TRADEOFFS.map(function (x) {
         return '<div style="margin-bottom:8px"><b class="small">风险：' + esc(x.risk) + '</b>' +
           '<div class="note small">当前处理：' + esc(x.handling) + '</div></div>';
       }).join('') +
-      '<div class="note small">上述风险为设计层面的说明，是否成立需由仿真与后续评估验证。</div></div>' +
+      '<div class="note small">上述风险为设计层面的说明；其中「激励可能扩大群体参与差距」已由第一轮结果部分印证，须在落地阶段单列指标跟踪。</div></div>' +
       '</div></div></div>';
   }
 
   function viewSimLimits() {
     var sim = D.SIM_RESULTS;
+    var pending = sim.pendingItems || [];
     return '<div class="shell">' +
-      govHeader('仿真端 · 结果局限说明', '在结果替换之前，必须保持这些说明可见。',
+      govHeader('仿真端 · 结果局限说明', '本页列出第一轮结果的适用边界与尚未完成的验证。',
         '<div class="btn-row"><a class="btn small" href="#/sim/compare">返回对比</a>' +
         '<a class="btn small" href="#/sim/config">参数与假设</a></div>') +
 
-      '<div class="ph-banner"><span class="mono">' + E.PLACEHOLDER_PREFIX + '</span>' +
-      '<span>全部数值为占位数据，不是实验结果。当前页面不得用于支撑任何结论。</span></div>' +
+      '<div class="result-banner"><span class="mono">' + esc(sim.dataSource) + '</span>' +
+      '<span>结果已就位，可以使用；但下列边界必须与数值同时出现，否则不得引用。</span></div>' +
 
       '<div class="cols c2">' +
-      '<div class="card"><div class="card-head"><h3>当前状态</h3></div>' +
-      '<div class="checkline on"><span class="bx">✓</span><span>仿真端界面结构已完成，S0–S3 与六项指标口径已固定</span></div>' +
-      '<div class="checkline"><span class="bx"></span><span>仿真实验尚未产出一轮结果（由 AI 2 并行负责）</span></div>' +
-      '<div class="checkline on"><span class="bx">✓</span><span>所有数值带 ' + E.PLACEHOLDER_PREFIX + ' 前缀并在每页顶部提示</span></div>' +
-      '<div class="checkline"><span class="bx"></span><span>分组参与率口径待 AI 2 固定</span></div>' +
-      '<div class="checkline"><span class="bx"></span><span>参数敏感性分析待完成</span></div>' +
+      '<div class="card"><div class="card-head"><h3>已完成与未完成</h3></div>' +
+      '<div class="checkline on"><span class="bx">✓</span><span>六项固定指标口径已固定，S0–S3 四组情景已跑完</span></div>' +
+      '<div class="checkline on"><span class="bx">✓</span><span>每情景 20 次重复（计划为至少 5 次），保留逐次指标与逐条原始事件</span></div>' +
+      '<div class="checkline on"><span class="bx">✓</span><span>使用配对共同随机数，可做情景间配对比较</span></div>' +
+      '<div class="checkline on"><span class="bx">✓</span><span>已提供均值的 95% 区间（20 次重复的正态近似）</span></div>' +
+      '<div class="checkline"><span class="bx"></span><span>参数敏感性分析尚未执行（已设计 6 组档位）</span></div>' +
+      '<div class="checkline"><span class="bx"></span><span>玉兰万象平台复跑或导出交叉核对尚未完成</span></div>' +
+      '<div class="checkline"><span class="bx"></span><span>未做任何统计显著性检验</span></div>' +
+      '<div class="checkline"><span class="bx"></span><span>运行清单未记录 Python 版本、操作系统与运行时间戳</span></div>' +
       '<div class="divider"></div>' +
-      '<div class="note small">数据来源字段：<span class="mono">' + esc(sim.dataSource) + '</span> · 运行日期：<span class="mono">' +
-      esc(sim.runDate === null ? 'N/A（占位）' : sim.runDate) + '</span> · 重复次数：<span class="mono">' +
-      esc(sim.repeats === null ? 'N/A（占位）' : sim.repeats) + '</span></div></div>' +
+      '<div class="note small">数据来源：<span class="mono">' + esc(sim.dataSource) + '</span> · 情景：S0–S3 · 重复次数：<span class="mono">' + sim.repeats +
+      '</span> · 种子：<span class="mono">' + sim.baseSeed + '</span> · 运行日期：<span class="mono">' + esc(sim.runDate) + '</span>' +
+      '（' + esc(sim.runDateNote) + '）</div></div>' +
 
-      '<div class="card"><div class="card-head"><h3>结果局限（占位清单）</h3></div>' +
-      '<ul>' + sim.limitations.map(function (x) { return '<li class="small">' + esc(x) + '</li>'; }).join('') + '</ul>' +
-      '<div class="divider"></div>' +
-      '<div class="small"><b>通用的解释边界</b></div>' +
+      '<div class="card placeholder-card"><div class="card-head"><h3>待补材料（不使用估计值代替）</h3><span class="spacer"></span>' +
+      '<span class="badge ph">' + pending.length + ' 项</span></div>' +
+      '<ul class="small" style="margin:0">' + pending.map(function (p) {
+        return '<li><b class="mono">' + esc(p.key) + '</b><div class="note small">' + esc(p.desc) + '</div></li>';
+      }).join('') + '</ul></div>' +
+
+      '<div class="card"><div class="card-head"><h3>结果局限</h3></div>' +
+      '<ul class="small">' + sim.limitations.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' +
+
+      '<div class="card"><div class="card-head"><h3>通用的解释边界</h3></div>' +
       '<ul class="small">' +
       '<li>仿真结果是合成智能体在特定假设下的产物，不能冒充真实调查，也不能作为现实证明。</li>' +
       '<li>结论必须写成「模型显示」或「在当前假设下」。</li>' +
       '<li>必须报告重复运行次数、均值、波动与异常，而不是只展示最好的一次。</li>' +
-      '<li>缺少可靠数据的参数必须标注为项目假设，并做敏感性分析。</li>' +
-      '<li>30 人定性访谈只能支持定性发现，不得表述为总体比例。</li>' +
+      '<li>缺少可靠数据的参数必须标注为项目假设并做敏感性分析；本轮敏感性分析未执行。</li>' +
+      '<li>未做显著性检验，因此不使用「显著」表述，只描述差值与区间。</li>' +
+      '<li>30 人定性访谈只能支持定性发现，不得表述为总体比例；本轮报告未引用该材料。</li>' +
       '</ul></div>' +
 
       '<div class="card"><div class="card-head"><h3>本产品原型的局限</h3></div>' +
       '<ul class="small">' +
       '<li>AI 处理为规则表演示，不是真实模型推理，也未评估准确率。</li>' +
       '<li>地图为程序绘制的示意底图，网格为虚构编号，不含真实行政区划与小区地图。</li>' +
-      '<li>语音为预置演示转写，不录音、不上传；照片为本机生成的演示图片。</li>' +
-      '<li>积分与驿站权益为虚构示例，不存在真实兑换关系。</li>' +
+      '<li>语音为预置演示转写，不录音、不上传；照片使用内置演示图，不涉及本地文件选择。</li>' +
+      '<li>积分与驿站权益为虚构示例，不存在真实兑换关系；办结产生的积分不累计到账户余额。</li>' +
       '<li>未接入任何政府、物业、外卖或网约车平台生产系统。</li>' +
-      '<li>「退回补充」的回填表单未实现，属第二轮候选范围。</li>' +
+      '<li>「退回补充」的回填表单未实现，上报人侧只能查看待补充事项。</li>' +
+      '<li>品牌与合规界面（AI 生成内容标识、申诉举报入口）为通用示例，非最终品牌设计。</li>' +
+      '<li>脱敏规则使用后行断言，需 Chrome 62+ / Edge 79+ 等现代浏览器。</li>' +
       '</ul></div>' +
 
       '<div class="card"><div class="card-head"><h3>与报告、视频的对接要求</h3></div>' +
       '<ul class="small">' +
-      '<li>报告中引用本原型截图时，必须保留「占位数据，不是实验结果」的说明。</li>' +
-      '<li>视频旁白不得把占位数值念成实验结果。</li>' +
-      '<li>替换为 AI 2 结果后，须重新生成截图并更新本文档与 demo-script.md。</li>' +
-      '<li>替换步骤见 technical-flow.md 第 6 节。</li>' +
+      '<li>引用本页数值时，必须同时保留「第一轮合成仿真、在当前项目假设下、20 次重复」三项限定语。</li>' +
+      '<li>视频旁白不得使用「显著」「证明有效」等表述。</li>' +
+      '<li>群体参与差距不得表述为机制有效或差距缩小。</li>' +
+      '<li>敏感性分析与平台复跑完成后，须重新生成截图并更新本文档与 demo-script.md。</li>' +
       '</ul></div>' +
       '</div></div>';
   }

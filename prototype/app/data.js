@@ -2,8 +2,9 @@
  * 蜂汇智理 原型 v0.1 — 数据层（data.js）
  * -----------------------------------------------------------------------------
  * 重要声明：
- *   1. 本文件全部数据为【虚构或脱敏的演示数据】，不含任何真实个人信息。
- *   2. 仿真相关数值全部带 PLACEHOLDER_SIM_RESULT 前缀，属于【占位数据，不是实验结果】。
+ *   1. 产品数据（工单、服务点、积分等）全部为【虚构或脱敏的演示数据】，不含任何真实个人信息。
+ *   2. 仿真数值为 AI 2 第一轮合成仿真结果（每情景 20 次重复），在当前项目假设下得出，
+ *      不是现实统计或政策效果证明；尚未产出的敏感性分析与平台复跑以 SIM_RESULT_NEEDED 标注。
  *   3. 本原型不接入任何政府、物业、外卖或网约车平台生产系统。
  *   4. 地图与网格编号为示意数据，不代表真实行政区划。
  *   5. 严重事故、火灾或治安事件必须提示联系 110 / 119 / 120 / 122，AI 不替代法定应急渠道。
@@ -14,10 +15,11 @@ window.FHZ_DATA = (function () {
   'use strict';
 
   var NOTICES = {
-    demo: '原型演示环境 · 演示数据为虚构或脱敏 · 不代表真实系统接入 · AI 输出仅为建议',
-    placeholder: '占位数据，不是实验结果。数值用于演示界面结构，须由社会仿真实验的最终结果替换。',
+    demo: '原型演示环境 · 产品数据为虚构或脱敏 · 不代表真实系统接入 · AI 输出仅为建议',
+    placeholder: '本页标注 SIM_RESULT_NEEDED 的条目尚未产出，不得用估计值代替。',
     aiAdvice: 'AI 建议，需人工确认。模型输出不构成行政决定。',
-    simDisclaimer: '数值均带 PLACEHOLDER_SIM_RESULT 标记，属占位数据，不是实验结果。'
+    simDisclaimer: '第一轮合成仿真结果（每情景 20 次重复）。在当前项目假设下得出，不是现实统计或政策效果证明。',
+    simSource: '数据来源：simulation/results/aggregated-metrics.csv、paired-effects.csv、run-metrics.csv'
   };
 
   /* ---------------------------------------------------------------- 情景 S0-S3 */
@@ -88,14 +90,19 @@ window.FHZ_DATA = (function () {
     keywords: [], rationale: '未命中明确规则，建议人工判断类别'
   };
 
-  /* ------------------------------------------------------------------ 脱敏规则 */
+  /* ------------------------------------------------------------------ 脱敏规则
+   * 第 1–6 条由 engine.js 的 desensitize() 以正则实现，可在原型中演示。
+   * 第 7 条（人脸）属部署阶段规则：原型使用内置演示图，不处理真实照片，
+   * 因此该规则不在代码中实现，只在文档与规则表中登记。
+   */
   var PII_RULES = [
     { id: 'PII-PHONE', label: '手机号', note: '保留前三后二' },
     { id: 'PII-PLATE', label: '车牌', note: '保留省份简称' },
-    { id: 'PII-ID', label: '身份证号', note: '整段移除' },
+    { id: 'PII-ID', label: '身份证号', note: '整段遮蔽，保留前 6 后 3' },
     { id: 'PII-CONTACT', label: '微信号 / QQ', note: '替换为联系方式已隐藏' },
     { id: 'PII-ADDR', label: '精确门牌', note: '保留到楼栋号' },
-    { id: 'PII-NAME', label: '疑似真实姓名', note: '替换为某先生 / 某女士' }
+    { id: 'PII-NAME', label: '疑似真实姓名', note: '替换为某先生 / 某女士' },
+    { id: 'PII-FACE', label: '人脸', note: '部署阶段规则：照片进入 AI 前本地打码或模糊，原型不处理真实照片', implemented: false }
   ];
 
   /* ------------------------------------------------- 定位层级（示意，不算真实区划） */
@@ -354,7 +361,7 @@ window.FHZ_DATA = (function () {
     id: 'R-1001',
     name: '示例骑手 A',
     role: '示例骑手（虚构角色）',
-    group: '早高峰骑手',
+    group: '示例骑手（演示分组）',
     points: 120,
     pointsNote: '演示数值，用于展示激励机制界面',
     weekReports: 5,
@@ -362,85 +369,154 @@ window.FHZ_DATA = (function () {
     streakWeeks: 2
   };
 
-  /* -------------------------------------------------- 占位仿真结果（PLACEHOLDER） */
+  /* ------------------------------------------------ AI 2 第一轮仿真结果（真实数据）
+   * 来源：simulation/results/aggregated-metrics.csv（每情景 20 次重复的均值与正态近似 95% 区间）
+   *       simulation/results/paired-effects.csv（配对共同随机数下的递进机制差）
+   *       simulation/results/run-metrics.csv（分群体参与率，由 20 次逐次运行求均值）
+   * 限定语（引用时必须保留）：在当前项目假设下的合成仿真结果，不是现实统计或政策效果证明。
+   *   每情景 20 次重复、每次 240 名合成从业者、56 个模拟日、基础随机种子 20260914、配对共同随机数。
+   *   第一轮使用自主代码环境，未做统计显著性检验。
+   * 尚未产出（一律保留 SIM_RESULT_NEEDED，不自行编造数字）：
+   *   sensitivity-analysis.md（敏感性分析）与 final-summary.md（最终汇总）在仓库中不存在。
+   */
   var SIM_RESULTS = {
-    dataSource: 'PLACEHOLDER_SIM_RESULT',
-    isPlaceholder: true,
-    notice: NOTICES.placeholder,
-    runDate: null,
-    repeats: null,
-    // 指标口径（单位与方向），与 technical-flow.md 第 5 节一致
-    // 每个指标的 values 为该指标在 S0–S3 的占位数值
+    dataSource: 'AI2-simulation',
+    isPlaceholder: false,
+    round: '第一轮',
+    notice: '第一轮合成仿真结果（每情景 20 次重复）。在当前项目假设下得出，不是现实统计或政策效果证明。',
+    runDate: '2026-09-15',
+    runDateNote: 'experiment-manifest.json 未记录运行时间，此处采用成果提交日期',
+    repeats: 20,
+    populationPerRun: 240,
+    daysPerRun: 56,
+    baseSeed: 20260914,
+    limiter: '第一轮使用自主代码环境，尚未在玉兰万象平台复跑；未做统计显著性检验；全部参数为项目假设。',
     metrics: [
       {
         key: 'effectiveReportRate', name: '有效上报率', unit: '%', direction: 'up',
-        note: '有效工单数 / 总上报数', scale: 'index-100',
-        values: { S0: 18, S1: 52, S2: 61, S3: 74 }
+        note: '有效独立上报及成功合并佐证数 ÷ 普通原始上报数', scale: 'index-100',
+        values: { S0: 53.5, S1: 71.9, S2: 71.4, S3: 70.1 },
+        ci: { S0: [52.6, 54.4], S1: [71.2, 72.7], S2: [70.7, 72.2], S3: [69.6, 70.6] }
       },
       {
         key: 'duplicateOrInvalidRate', name: '重复或无效上报率', unit: '%', direction: 'down',
-        note: '（重复 + 无效）/ 总上报数', scale: 'index-100',
-        values: { S0: 46, S1: 21, S2: 17, S3: 9 }
+        note: '无效上报及未合并重复数 ÷ 普通原始上报数（与有效上报率互补）', scale: 'index-100',
+        values: { S0: 46.5, S1: 28.1, S2: 28.6, S3: 29.9 },
+        ci: { S0: [45.6, 47.4], S1: [27.3, 28.8], S2: [27.8, 29.3], S3: [29.4, 30.4] }
       },
       {
         key: 'dispatchAccuracy', name: '工单分派准确率', unit: '%', direction: 'up',
-        note: '一次分派即被认可的工单占比', scale: 'index-100',
-        values: { S0: 41, S1: 63, S2: 71, S3: 79 }
+        note: '正确分派工单数 ÷ 工单数', scale: 'index-100',
+        values: { S0: 64.6, S1: 85.2, S2: 85.7, S3: 85.2 },
+        ci: { S0: [63.0, 66.3], S1: [84.5, 86.0], S2: [85.1, 86.2], S3: [84.5, 85.9] }
       },
       {
         key: 'avgHandlingHours', name: '平均处置时间', unit: '小时', direction: 'down',
-        note: '受理到办结的平均时长', scale: 'hours',
-        values: { S0: 41.5, S1: 22.6, S2: 16.8, S3: 15.2 }
+        note: '已解决工单的处置小时均值', scale: 'hours',
+        values: { S0: 51.66, S1: 32.39, S2: 27.20, S3: 27.16 },
+        ci: { S0: [50.89, 52.44], S1: [32.09, 32.68], S2: [27.03, 27.36], S3: [26.97, 27.35] }
       },
       {
-        key: 'participantTimeCost', name: '参与者时间成本', unit: '分钟', direction: 'down',
-        note: '单次上报的平均操作与等待时间；占位值显示 S2、S3 略高于 S1，用于提示透明反馈与激励带来的额外操作成本', scale: 'minutes',
-        values: { S0: 5.4, S1: 1.5, S2: 1.8, S3: 2.1 }
+        key: 'participantTimeCost', name: '平均上报耗时', unit: '分钟', direction: 'down',
+        note: '所有实际上报（含应急转接）的分钟均值，仅覆盖上报环节、不含等待处置时间；两位小数会把 S1/S2/S3 都显示为 3.00，S2→S3 配对差 +0.0065 分钟且区间跨越 0',
+        scale: 'minutes',
+        values: { S0: 8.01, S1: 3.00, S2: 3.00, S3: 3.00 },
+        ci: { S0: [7.98, 8.04], S1: [2.99, 3.01], S2: [2.99, 3.00], S3: [3.00, 3.01] },
+        exact: { S0: 8.0112, S1: 2.9973, S2: 2.9962, S3: 3.0027 }
       },
       {
-        key: 'participationGap', name: '不同新就业群体参与差距', unit: '百分点', direction: 'down',
-        note: '分组参与率的极差', scale: 'percentage-points',
-        values: { S0: 21, S1: 13, S2: 9, S3: 6 }
+        key: 'participationGap', name: '群体参与差距', unit: '百分点', direction: 'down',
+        note: '骑手参与率与网约车司机参与率之差的绝对值（仅两类群体，非多群体极差）；该项波动明显大于其他指标，不宜用于强结论', scale: 'percentage-points',
+        values: { S0: 1.19, S1: 2.33, S2: 2.81, S3: 2.78 },
+        ci: { S0: [0.91, 1.48], S1: [1.61, 3.05], S2: [1.90, 3.72], S3: [1.40, 4.17] }
       }
     ],
-    // 补充观察项（不属于六项固定指标，单独展示）
+    // 补充观察项（不属于六项固定指标）
     supplementary: [
-      { key: 'sustainedParticipation', name: '持续参与意愿指数（补充观察项）', unit: '指数', direction: 'up', values: { S0: 31, S1: 48, S2: 66, S3: 78 } }
+      {
+        key: 'latePeriodParticipation', name: '最后两周参与率（辅助指标）', unit: '%', direction: 'up',
+        note: '第 43—56 日上报数 ÷ 同期普通问题遇见数；对应研究问题中的持续参与',
+        values: { S0: 12.2, S1: 29.6, S2: 40.2, S3: 49.3 }
+      },
+      {
+        key: 'issueCoverageRate', name: '独立问题覆盖率（辅助指标）', unit: '%', direction: 'up',
+        note: '至少收到有效信息的问题数 ÷ 被遇见的独立问题数',
+        values: { S0: 15.3, S1: 41.8, S2: 52.2, S3: 59.6 }
+      },
+      {
+        key: 'resolutionRate', name: '工单解决率（辅助指标）', unit: '%', direction: 'up',
+        note: '已解决工单数 ÷ 工单数；S3 相对 S2 轻微下降且 95% 区间跨越 0',
+        values: { S0: 78.9, S1: 83.1, S2: 87.2, S3: 86.4 }
+      }
     ],
+    // 分群体参与率（仅两类，来自 run-metrics.csv 的 20 次均值）
+    // 注意：参与差距指标是「每次运行 |骑手−司机| 的均值」，不等于此处两组均值的差，
+    //       因此两组均值看起来接近（如 S0 为 12.26% 与 11.93%），而差距指标为 1.19 个百分点。
     groups: [
-      { name: '早高峰骑手', values: { S0: 26, S1: 58, S2: 66, S3: 79 } },
-      { name: '夜间骑手', values: { S0: 17, S1: 44, S2: 55, S3: 71 } },
-      { name: '网约车司机', values: { S0: 12, S1: 38, S2: 49, S3: 65 } },
-      { name: '兼职骑手', values: { S0: 5, S1: 27, S2: 38, S3: 58 } }
+      { name: '骑手参与率', values: { S0: 12.26, S1: 29.67, S2: 40.04, S3: 48.27 } },
+      { name: '网约车司机参与率', values: { S0: 11.93, S1: 28.46, S2: 38.53, S3: 46.03 } }
     ],
-    conclusion: 'PLACEHOLDER_SIM_RESULT::conclusion — 结论段落将在社会仿真实验完成后写入，' +
-      '并区分「模型显示」与「现实证明」。当前不提供任何因果性结论。',
+    groupNote: '本轮仿真只有骑手与网约车司机两类群体。原型早期版本出现的四分组（早高峰骑手 / 夜间骑手 / 网约车司机 / 兼职骑手）在仿真数据中没有对应分组，已删除。',
+    groupCaveat: '两组均值非常接近，是因为本轮的骑手与司机画像差异很小；而「群体参与差距」指标是每次运行下两组参与率之差的均值（不是两组均值的差），因此该指标大于此处两组均值之差。两者不可互相推算。',
+    groupMax: 60,
+    // 递进机制配对效应（配对共同随机数）
+    pairedEffects: [
+      { transition: 'S0→S1', metric: '有效上报率', diff: '+18.4 个百分点', ci: '[+17.4, +19.5]', crossesZero: false, caveat: '' },
+      { transition: 'S0→S1', metric: '平均上报耗时', diff: '−5.01 分钟', ci: '[−5.04, −4.98]', crossesZero: false, caveat: '' },
+      { transition: 'S1→S2', metric: '平均处置时间', diff: '−5.19 小时', ci: '[−5.47, −4.90]', crossesZero: false, caveat: '该步同时调整了基础处置时长参数（36→30 小时），不应全部归因于透明反馈' },
+      { transition: 'S1→S2', metric: '最后两周参与率', diff: '+10.6 个百分点', ci: '[+9.3, +11.9]', crossesZero: false, caveat: '' },
+      { transition: 'S2→S3', metric: '独立问题覆盖率', diff: '+7.4 个百分点', ci: '[+6.4, +8.3]', crossesZero: false, caveat: '' },
+      { transition: 'S2→S3', metric: '群体参与差距', diff: '−0.03 个百分点', ci: '[−1.90, +1.84]', crossesZero: true, caveat: '区间跨越 0，不得宣称激励缩小了参与差距' }
+    ],
+    conclusion: '在当前项目假设下，模型显示：AI 上报（S1）把平均上报耗时从 8.01 分钟降到 3.00 分钟、有效上报率从 53.5% 提高到 71.9%；透明反馈（S2）把平均处置时间从 32.39 小时降到 27.20 小时；差异化服务激励（S3）把独立问题覆盖率从 52.2% 提高到 59.6%、最后两周参与率从 40.2% 提高到 49.3%，同期有效上报率从 71.4% 小幅回落到 70.1%。群体参与差距没有缩小：S0 至 S2 由 1.19 扩大到 2.81 个百分点，S2→S3 的变化为 −0.03 个百分点且 95% 区间跨越 0。',
     limitations: [
-      '全部数值为占位数据，不是实验结果，不得在报告或答辩中作为证据引用。',
-      '数值方向仅用于演示界面结构，不能作为机制有效性的判断依据。',
-      '参与者时间成本在 S2、S3 略高于 S1，体现透明反馈与激励带来的额外确认步骤，该现象需由仿真验证。',
-      '参与差距为分组参与率的极差，分组口径须由 AI 2 在模型说明中固定。'
+      '本页数值为第一轮合成仿真结果，不是现实统计或政策效果证明，不得作为因果结论引用。',
+      '参与者为合成智能体；居民、站长与处置机构在自主代码中被压缩为机制函数。',
+      '参数均为项目假设，未经总体数据校准；敏感性分析已设计 6 组低/中/高档位但尚未执行：SIM_RESULT_NEEDED_SENSITIVITY。',
+      '第一轮使用自主代码环境，尚未在玉兰万象平台复跑：SIM_RESULT_NEEDED_ONESIM_RERUN。',
+      '未做任何统计显著性检验，本页与报告均不使用「显著」表述，只描述差值与 95% 区间。',
+      '群体参与差距的 95% 区间明显宽于其他指标（S3 为 [1.40, 4.17]），估计不稳定。',
+      'S1→S2 并非严格单变量：该步除反馈机制外还调整了基础处置时长参数（36→30 小时）。',
+      '平均处置时间只统计已解决工单；平均上报耗时只覆盖上报环节，不含等待处置时间。'
     ],
-    assumptionRefs: 'CITATION_NEEDED — 参数来源待 AI 1 证据表与 AI 2 实验设计补充'
+    pendingItems: [
+      { key: 'SIM_RESULT_NEEDED_SENSITIVITY', desc: '关键参数敏感性分析（simulation/results/sensitivity-analysis.md 尚未产出）' },
+      { key: 'SIM_RESULT_NEEDED_FINAL_SUMMARY', desc: '第一轮最终汇总（simulation/results/final-summary.md 尚未产出）' },
+      { key: 'SIM_RESULT_NEEDED_ONESIM_RERUN', desc: '玉兰万象平台复跑或导出交叉核对' }
+    ],
+    assumptionRefs: '参数来源见 simulation/evidence/parameter-register.md（全部登记为项目假设）；CITATION_NEEDED — 条文级政策依据待 AI 1 逐字复核'
   };
 
-  /* ------------------------------------------------------------- 参数与假设表 */
+  /* ------------------------------------------------------------- 参数与假设表
+   * 取值来自 AI 2 的 simulation/code/config.json 与 evidence/parameter-register.md。
+   * 来源标注：来自材料 / 机制设定 / 项目假设 / 实验记录 / 待补。
+   */
   var SIM_PARAMS = [
-    { key: 'agentCount', name: '智能体数量', value: '待定', source: '项目假设', affects: '全部情景', note: '由 AI 2 模型说明确定' },
-    { key: 'workHours', name: '日均工作时长', value: '10 小时', source: '项目假设', affects: '全部情景', note: '影响可上报时间窗口' },
-    { key: 'timePressure', name: '时间压力敏感度', value: '高', source: '项目假设', affects: '全部情景', note: '决定上报意愿衰减速度' },
-    { key: 'trustBaseline', name: '初始信任度', value: '低 - 中', source: '项目假设', affects: 'S0-S3', note: '影响首次上报门槛' },
-    { key: 'privacyConcern', name: '隐私顾虑强度', value: '中 - 高', source: '项目假设', affects: 'S1-S3', note: '影响是否愿意开启位置与照片' },
-    { key: 'feedbackLatency', name: '反馈时延', value: 'S2/S3：分钟级；S0：无反馈', source: '机制设定', affects: 'S2、S3', note: '透明反馈机制的实现方式' },
-    { key: 'incentiveStrength', name: '激励强度', value: '服务型权益（演示阈值）', source: '机制设定', affects: 'S3', note: '仅服务型激励，不含现金' },
-    { key: 'dedupThreshold', name: '重复合并阈值', value: '同类别 + 网格距离 ≤ 1', source: '机制设定', affects: 'S1-S3', note: '与原型 engine.js 规则一致' }
+    { key: 'population_per_run', name: '每次运行合成从业者数', value: '240 名', source: '项目假设', affects: '全部情景', note: '模型规模设定，未经总体校准' },
+    { key: 'days_per_run', name: '每次运行模拟天数', value: '56 天', source: '项目假设', affects: '全部情景', note: '最后两周（第 43—56 日）用于观察持续参与' },
+    { key: 'runs_per_scenario', name: '每情景重复次数', value: '20 次', source: '实验记录', affects: '全部情景', note: '计划为至少 5 次，实际完成 20 次' },
+    { key: 'base_seed', name: '基础随机种子', value: '20260914', source: '实验记录', affects: '全部情景', note: '与配对共同随机数配合使用' },
+    { key: 'paired_common_random_numbers', name: '配对共同随机数', value: '启用', source: '实验设计', affects: 'S0–S3 配对比较', note: '同一 run 编号内比较情景差异' },
+    { key: 'daily_encounter_probability', name: '每日问题遇见概率', value: '0.18', source: '项目假设', affects: '全部情景', note: '已列入敏感性档位：0.10 / 0.18 / 0.28' },
+    { key: 'rider_share', name: '骑手建模占比', value: '0.773', source: '项目假设', affects: '全部情景', note: '等于调研中两类一线从业者 17/22，不代表真实占比' },
+    { key: 'time_pressure', name: '从业者时间压力', value: '0.45–0.95（司机 +0.05）', source: '来自材料（方向）+ 项目假设（范围）', affects: '全部情景', note: '材料支持方向，数值范围为假设' },
+    { key: 'trust_baseline', name: '初始信任度', value: '0.30–0.75', source: '来自材料（机制）+ 项目假设（幅度）', affects: '全部情景', note: '已列入敏感性档位：−0.15 / 0 / +0.15' },
+    { key: 'structured_capability', name: 'AI 结构化能力', value: '0.88', source: '项目假设', affects: 'S1–S3', note: '已列入敏感性档位：0.70 / 0.88 / 0.95' },
+    { key: 'feedback_probability', name: '反馈送达概率', value: 'S2/S3 0.80；S0 无反馈', source: '机制设定', affects: 'S2、S3', note: '已列入敏感性档位：0.60 / 0.80 / 0.92' },
+    { key: 'incentive_strength', name: '差异化激励强度', value: '0.55（匹配式）', source: '机制设定', affects: 'S3', note: '已列入敏感性档位：0.20 / 0.55 / 0.85；仅服务型权益，不含现金' },
+    { key: 'base_information_quality', name: '基础信息质量', value: '0.56', source: '项目假设', affects: '全部情景', note: '影响接受概率与有效上报率' },
+    { key: 'base_resolution_hours', name: '基础处置时长', value: 'S1 36 小时 → S2 30 小时', source: '项目假设', affects: 'S1、S2', note: '该参数在 S1→S2 同时变化，因此 S2 的改善不应全部归因于透明反馈' },
+    { key: 'resolved_probability', name: '处置完成概率', value: '0.76（正确分派另有加成）', source: '项目假设', affects: '全部情景', note: '影响工单解决率' },
+    { key: 'dedup_threshold', name: '重复判定方式', value: '同类别 + 网格距离 ≤ 1 + 48 小时内', source: '机制设定', affects: 'S1–S3', note: '仿真侧为去重概率；原型 engine.js 使用同规则的确定性版本' },
+    { key: 'sensitivity_status', name: '敏感性分析状态', value: 'SIM_RESULT_NEEDED_SENSITIVITY（已设计 6 组档位，未执行）', source: '待补', affects: '全部情景', note: '不得以估计值代替' }
   ];
 
   var SCENARIO_TRADEOFFS = [
     { risk: '激励可能诱导无效上报', handling: '有效线索才计积分，无效不计分；重复项合并后不重复计分' },
     { risk: '透明反馈可能增加治理端工作量', handling: '反馈模板化、批量处理；原型以模板演示' },
-    { risk: '位置信息带来隐私顾虑', handling: '默认只取网格级位置，精确门牌降精度处理' },
-    { risk: '服务型激励可能加剧群体差距', handling: 'S3 设置群体差异化补足规则（演示），实际效果需仿真验证' }
+    { risk: '位置信息带来隐私顾虑', handling: '默认只取网格级位置，精确门牌降精度处理；部署阶段需补单独同意与告知（见 safety-and-privacy.md）' },
+    { risk: '服务型激励可能扩大群体参与差距', handling: '第一轮仿真显示差距未缩小（S0 1.19 → S2 2.81 个百分点，S2→S3 区间跨 0），因此落地阶段须单列群体参与差距指标，并设计面向低参与群体的可达性措施' },
+    { risk: '参与者时间成本几乎不受机制影响', handling: 'S1–S3 平均上报耗时均在 3.00 分钟附近，说明该指标由上报流程步数决定，而非反馈与激励；界面显示两位小数会掩盖差异' }
   ];
 
   return {

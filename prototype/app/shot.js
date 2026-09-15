@@ -34,10 +34,12 @@ const SHOTS = [
   { file: '07-gov-events.png', route: '#/gov/events', wait: 2200 },
   { file: '08-gov-event-detail.png', route: '#/gov/events/T-20260312-07', wait: 2200 },
   { file: '09-gov-map.png', route: '#/gov/map', wait: 2200 },
-  { file: '10-gov-metrics.png', route: '#/gov/metrics', wait: 2200 },
-  { file: '11-sim-compare.png', route: '#/sim/compare', wait: 2200 },
-  { file: '12-sim-config.png', route: '#/sim/config', wait: 1800 },
-  { file: '13-sim-limits.png', route: '#/sim/limits', wait: 1800 }
+  { file: '10-gov-metrics.png', route: '#/gov/metrics', wait: 2400 },
+  { file: '11-sim-compare.png', route: '#/sim/compare', wait: 2600 },
+  { file: '12-sim-config.png', route: '#/sim/config', wait: 2200 },
+  { file: '13-sim-limits.png', route: '#/sim/limits', wait: 2000 },
+  // 第二轮新增：紧急线索留存页（紧急事件不进入普通工单进度视图）
+  { file: '14-rider-emergency-confirm.png', route: '#/rider/emergency-confirm?input=emergency', wait: 1800 }
 ];
 
 function findBrowser() {

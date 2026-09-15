@@ -94,7 +94,10 @@ ul { margin: 0; padding-left: 18px; }
 .console button:hover { background: #333842; }
 .console button.primary { background: var(--brand); color: #2c2100; border-color: var(--brand-deep); font-weight: 700; }
 
-body.demo-mode .topbar { display: none; }
+/* 演示模式：只隐藏控制台，保留品牌、导航与顶部声明条（录屏要求声明条可见） */
+body.demo-mode .topbar .console,
+body.demo-mode .topbar .console + label,
+body.demo-mode .topbar-inner > label { display: none; }
 
 /* ----------------------------------------------------------------------- 布局 */
 
@@ -446,6 +449,53 @@ table.tbl caption { caption-side: top; text-align: left; font-size: 12px; color:
   font-size: 12.5px; font-weight: 600; margin-bottom: 12px;
 }
 .ph-banner .mono { font-family: var(--mono); }
+
+/* --------------------------------------------------------------- 仿真结果表 */
+
+table.tbl td .ci { font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; margin-top: 2px; }
+table.tbl.sim-tbl td.num { white-space: nowrap; }
+.sim-legend {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 10px; margin-top: 8px; line-height: 1.6;
+}
+.sim-legend b { color: var(--ink); }
+.result-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #eef7f1; border: 1px solid #bfe0cf; color: #14603f;
+  border-radius: 12px; padding: 9px 12px; font-size: 12.5px; margin-bottom: 12px; line-height: 1.6;
+}
+.result-banner .mono { font-family: var(--mono); font-size: 11.5px; }
+
+/* ------------------------------------------------------------------------ 弹层 */
+
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(16, 20, 28, .45);
+  display: grid; place-items: center; z-index: 120; padding: 20px;
+}
+.modal {
+  width: 420px; max-width: 100%; max-height: 86vh; overflow: auto;
+  background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-lg);
+  padding: 18px; border: 1px solid var(--border-strong);
+}
+.modal h3 { font-size: 16px; }
+.modal .consent-item {
+  display: flex; gap: 9px; align-items: flex-start;
+  border: 1px solid var(--border); border-radius: 12px; padding: 9px 11px; margin-bottom: 8px;
+  background: var(--surface-2);
+}
+.modal .consent-item.required { border-color: #f0b6b3; background: #fff8f7; }
+.modal .consent-item .t { font-weight: 700; font-size: 13px; }
+.modal .consent-item .s { font-size: 11.5px; color: var(--muted); }
+.modal input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; flex: none; }
+.ai-label-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #1b1e24; color: #fff; border-radius: 6px; padding: 1px 7px;
+  font-size: 10.5px; letter-spacing: .3px;
+}
+.appeal-box {
+  border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+  background: var(--surface-2); font-size: 12.5px;
+}
 
 /* -------------------------------------------------------------------- 杂项 */
 

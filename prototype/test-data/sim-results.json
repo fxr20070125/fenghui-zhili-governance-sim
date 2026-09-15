@@ -1,90 +1,132 @@
 {
-  "_notice": "本文件全部为占位数据（PLACEHOLDER_SIM_RESULT），不是实验结果，不得作为证据引用。真实结果由 AI 2 社会仿真实验工程师在第二轮提供。",
-  "_owner": "AI 3 产品原型与演示工程师",
-  "_replacementProtocol": "见 prototype/technical-flow.md 第 6 节：替换数值 → 移除 PLACEHOLDER_SIM_RESULT 前缀 → 改为 dataSource=AI2-simulation → 重新生成截图 → 更新 demo-script.md",
-  "_status": "第一轮占位",
+  "_notice": "本文件为 AI 2 第一轮社会仿真结果（每情景 20 次重复）。数值为当前项目假设下的合成仿真结果，不是现实统计或政策效果证明。产品数据（工单、服务点、积分）仍为虚构或脱敏的演示数据。",
+  "_owner": "AI 3 产品原型与演示工程师（数值来源：AI 2 simulation 分支）",
+  "_round": "第二轮：已用 AI 2 第一轮真实结果替换全部占位数值",
+  "_sourceFiles": [
+    "simulation/results/aggregated-metrics.csv（六项主指标与三项辅助指标的均值、95% 区间）",
+    "simulation/results/paired-effects.csv（递进机制的配对差与 95% 区间）",
+    "simulation/results/run-metrics.csv（分群体参与率，20 次逐次运行的均值）",
+    "simulation/results/round-1-summary.md（汇总表，用于交叉核对）"
+  ],
+  "_stillMissing": [
+    "simulation/results/sensitivity-analysis.md（敏感性分析）：SIM_RESULT_NEEDED_SENSITIVITY，原型内不使用估计值代替",
+    "simulation/results/final-summary.md（第一轮最终汇总）：SIM_RESULT_NEEDED_FINAL_SUMMARY",
+    "玉兰万象平台复跑或导出交叉核对：SIM_RESULT_NEEDED_ONESIM_RERUN"
+  ],
 
-  "dataSource": "PLACEHOLDER_SIM_RESULT",
-  "isPlaceholder": true,
-  "notice": "占位数据，不是实验结果。数值用于演示界面结构，须由社会仿真实验的最终结果替换。",
-  "runDate": null,
-  "repeats": null,
+  "dataSource": "AI2-simulation",
+  "isPlaceholder": false,
+  "round": "第一轮",
+  "notice": "第一轮合成仿真结果（每情景 20 次重复）。在当前项目假设下得出，不是现实统计或政策效果证明。",
+  "limiter": "第一轮使用自主代码环境，尚未在玉兰万象平台复跑；未做统计显著性检验；全部参数为项目假设。",
+  "runDate": "2026-09-15",
+  "runDateNote": "experiment-manifest.json 未记录运行时间，此处采用成果提交日期",
+  "repeats": 20,
+  "populationPerRun": 240,
+  "daysPerRun": 56,
+  "baseSeed": 20260914,
 
   "scenarios": [
     { "id": "S0", "name": "现状基准", "added": "微信群、电话或零散反映" },
     { "id": "S1", "name": "AI 上报", "added": "一键上报 + AI 脱敏 / 分类 / 合并 / 建议分派" },
-    { "id": "S2", "name": "AI 上报 + 透明反馈", "added": "责任主体、处理进度、结果反馈" },
+    { "id": "S2", "name": "AI 上报 + 透明反馈", "added": "责任主体、处理进度、结果反馈（该步同时调整了基础处置时长参数 36→30 小时）" },
     { "id": "S3", "name": "AI 上报 + 透明反馈 + 差异化激励", "added": "积分、驿站权益、托管优先权等服务型激励" }
   ],
 
   "metrics": [
     {
       "key": "effectiveReportRate", "name": "有效上报率", "unit": "%", "direction": "up",
-      "note": "有效工单数 / 总上报数",
-      "values": { "S0": 18, "S1": 52, "S2": 61, "S3": 74 }
+      "note": "有效独立上报及成功合并佐证数 ÷ 普通原始上报数",
+      "values": { "S0": 53.5, "S1": 71.9, "S2": 71.4, "S3": 70.1 },
+      "ci": { "S0": [52.6, 54.4], "S1": [71.2, 72.7], "S2": [70.7, 72.2], "S3": [69.6, 70.6] }
     },
     {
       "key": "duplicateOrInvalidRate", "name": "重复或无效上报率", "unit": "%", "direction": "down",
-      "note": "（重复 + 无效）/ 总上报数",
-      "values": { "S0": 46, "S1": 21, "S2": 17, "S3": 9 }
+      "note": "无效上报及未合并重复数 ÷ 普通原始上报数（与有效上报率互补，两者之和为 100%）",
+      "values": { "S0": 46.5, "S1": 28.1, "S2": 28.6, "S3": 29.9 },
+      "ci": { "S0": [45.6, 47.4], "S1": [27.3, 28.8], "S2": [27.8, 29.3], "S3": [29.4, 30.4] }
     },
     {
       "key": "dispatchAccuracy", "name": "工单分派准确率", "unit": "%", "direction": "up",
-      "note": "一次分派即被认可的工单占比",
-      "values": { "S0": 41, "S1": 63, "S2": 71, "S3": 79 }
+      "note": "正确分派工单数 ÷ 工单数",
+      "values": { "S0": 64.6, "S1": 85.2, "S2": 85.7, "S3": 85.2 },
+      "ci": { "S0": [63.0, 66.3], "S1": [84.5, 86.0], "S2": [85.1, 86.2], "S3": [84.5, 85.9] }
     },
     {
       "key": "avgHandlingHours", "name": "平均处置时间", "unit": "小时", "direction": "down",
-      "note": "受理到办结的平均时长",
-      "values": { "S0": 41.5, "S1": 22.6, "S2": 16.8, "S3": 15.2 }
+      "note": "已解决工单的处置小时均值",
+      "values": { "S0": 51.66, "S1": 32.39, "S2": 27.20, "S3": 27.16 },
+      "ci": { "S0": [50.89, 52.44], "S1": [32.09, 32.68], "S2": [27.03, 27.36], "S3": [26.97, 27.35] }
     },
     {
-      "key": "participantTimeCost", "name": "参与者时间成本", "unit": "分钟", "direction": "down",
-      "note": "单次上报的平均操作与等待时间；占位值显示 S2、S3 略高于 S1，用于提示透明反馈与激励的额外操作成本",
-      "values": { "S0": 5.4, "S1": 1.5, "S2": 1.8, "S3": 2.1 }
+      "key": "participantTimeCost", "name": "平均上报耗时", "unit": "分钟", "direction": "down",
+      "note": "所有实际上报（含应急转接）的分钟均值。框架原指标名为「参与者时间成本」，本轮实测只覆盖上报环节，不含等待处置时间",
+      "values": { "S0": 8.01, "S1": 3.00, "S2": 3.00, "S3": 3.00 },
+      "ci": { "S0": [7.98, 8.04], "S1": [2.99, 3.01], "S2": [2.99, 3.00], "S3": [3.00, 3.01] },
+      "exact": { "S0": 8.0112, "S1": 2.9973, "S2": 2.9962, "S3": 3.0027 }
     },
     {
-      "key": "participationGap", "name": "不同新就业群体参与差距", "unit": "百分点", "direction": "down",
-      "note": "分组参与率的极差",
-      "values": { "S0": 21, "S1": 13, "S2": 9, "S3": 6 }
+      "key": "participationGap", "name": "群体参与差距", "unit": "百分点", "direction": "down",
+      "note": "骑手参与率与网约车司机参与率之差的绝对值（仅两类群体，非多群体极差）。该项波动明显大于其他指标，不宜用于强结论",
+      "values": { "S0": 1.19, "S1": 2.33, "S2": 2.81, "S3": 2.78 },
+      "ci": { "S0": [0.91, 1.48], "S1": [1.61, 3.05], "S2": [1.90, 3.72], "S3": [1.40, 4.17] }
     }
   ],
 
   "supplementary": [
     {
-      "key": "sustainedParticipation", "name": "持续参与意愿指数（补充观察项）", "unit": "指数", "direction": "up",
-      "note": "来自核心研究问题，但不属于六项固定指标，单独展示",
-      "values": { "S0": 31, "S1": 48, "S2": 66, "S3": 78 }
+      "key": "latePeriodParticipation", "name": "最后两周参与率（辅助指标）", "unit": "%", "direction": "up",
+      "note": "第 43—56 日上报数 ÷ 同期普通问题遇见数；对应研究问题中的持续参与",
+      "values": { "S0": 12.2, "S1": 29.6, "S2": 40.2, "S3": 49.3 }
+    },
+    {
+      "key": "issueCoverageRate", "name": "独立问题覆盖率（辅助指标）", "unit": "%", "direction": "up",
+      "note": "至少收到有效信息的问题数 ÷ 被遇见的独立问题数",
+      "values": { "S0": 15.3, "S1": 41.8, "S2": 52.2, "S3": 59.6 }
+    },
+    {
+      "key": "resolutionRate", "name": "工单解决率（辅助指标）", "unit": "%", "direction": "up",
+      "note": "已解决工单数 ÷ 工单数；S3 相对 S2 轻微下降且 95% 区间跨越 0",
+      "values": { "S0": 78.9, "S1": 83.1, "S2": 87.2, "S3": 86.4 }
     }
   ],
 
   "groups": [
-    { "name": "早高峰骑手", "values": { "S0": 26, "S1": 58, "S2": 66, "S3": 79 } },
-    { "name": "夜间骑手", "values": { "S0": 17, "S1": 44, "S2": 55, "S3": 71 } },
-    { "name": "网约车司机", "values": { "S0": 12, "S1": 38, "S2": 49, "S3": 65 } },
-    { "name": "兼职骑手", "values": { "S0": 5, "S1": 27, "S2": 38, "S3": 58 } }
+    { "name": "骑手参与率", "values": { "S0": 12.26, "S1": 29.67, "S2": 40.04, "S3": 48.27 } },
+    { "name": "网约车司机参与率", "values": { "S0": 11.93, "S1": 28.46, "S2": 38.53, "S3": 46.03 } }
+  ],
+  "groupNote": "本轮仿真只有骑手与网约车司机两类群体。原型早期版本出现的四分组（早高峰骑手 / 夜间骑手 / 网约车司机 / 兼职骑手）在仿真数据中没有对应分组，已删除。",
+  "groupCaveat": "两组均值非常接近，是因为本轮的骑手与司机画像差异很小；而「群体参与差距」指标是每次运行下两组参与率之差的均值（不是两组均值的差），因此该指标大于此处两组均值之差。两者不可互相推算。",
+
+  "pairedEffects": [
+    { "transition": "S0→S1", "metric": "有效上报率", "diff": "+18.4 个百分点", "ci": "[+17.4, +19.5]", "crossesZero": false, "caveat": "" },
+    { "transition": "S0→S1", "metric": "平均上报耗时", "diff": "−5.01 分钟", "ci": "[−5.04, −4.98]", "crossesZero": false, "caveat": "" },
+    { "transition": "S1→S2", "metric": "平均处置时间", "diff": "−5.19 小时", "ci": "[−5.47, −4.90]", "crossesZero": false, "caveat": "该步同时调整了基础处置时长参数（36→30 小时），不应全部归因于透明反馈" },
+    { "transition": "S1→S2", "metric": "最后两周参与率", "diff": "+10.6 个百分点", "ci": "[+9.3, +11.9]", "crossesZero": false, "caveat": "" },
+    { "transition": "S2→S3", "metric": "独立问题覆盖率", "diff": "+7.4 个百分点", "ci": "[+6.4, +8.3]", "crossesZero": false, "caveat": "" },
+    { "transition": "S2→S3", "metric": "群体参与差距", "diff": "−0.03 个百分点", "ci": "[−1.90, +1.84]", "crossesZero": true, "caveat": "区间跨越 0，不得宣称激励缩小了参与差距" }
   ],
 
-  "conclusion": "PLACEHOLDER_SIM_RESULT::conclusion — 结论段落将在社会仿真实验完成后写入，并区分「模型显示」与「现实证明」。当前不提供任何因果性结论。",
+  "conclusion": "在当前项目假设下，模型显示：AI 上报（S1）把平均上报耗时从 8.01 分钟降到 3.00 分钟、有效上报率从 53.5% 提高到 71.9%；透明反馈（S2）把平均处置时间从 32.39 小时降到 27.20 小时；差异化服务激励（S3）把独立问题覆盖率从 52.2% 提高到 59.6%、最后两周参与率从 40.2% 提高到 49.3%，同期有效上报率从 71.4% 小幅回落到 70.1%。群体参与差距没有缩小：S0 至 S2 由 1.19 扩大到 2.81 个百分点，S2→S3 的变化为 −0.03 个百分点且 95% 区间跨越 0。",
 
   "limitations": [
-    "全部数值为占位数据，不是实验结果，不得在报告或答辩中作为证据引用。",
-    "数值方向仅用于演示界面结构，不能作为机制有效性的判断依据。",
-    "参与者时间成本在 S2、S3 的占位值高于 S1，体现透明反馈与激励可能带来的额外确认步骤，该现象需由仿真验证。",
-    "参与差距为分组参与率的极差，分组口径须由 AI 2 在模型说明中固定。",
-    "占位数值未标注波动范围，替换时必须补上重复运行次数、均值与波动。"
+    "本文件数值为第一轮合成仿真结果，不是现实统计或政策效果证明，不得作为因果结论引用。",
+    "参与者为合成智能体；居民、站长与处置机构在自主代码中被压缩为机制函数。",
+    "参数均为项目假设，未经总体数据校准；敏感性分析已设计 6 组低/中/高档位但尚未执行（SIM_RESULT_NEEDED_SENSITIVITY）。",
+    "第一轮使用自主代码环境，尚未在玉兰万象平台复跑（SIM_RESULT_NEEDED_ONESIM_RERUN）。",
+    "未做任何统计显著性检验，界面与报告均不使用「显著」表述，只描述差值与 95% 区间。",
+    "群体参与差距的 95% 区间明显宽于其他指标（S3 为 [1.40, 4.17]），估计不稳定。",
+    "S1→S2 并非严格单变量：该步除反馈机制外还调整了基础处置时长参数（36→30 小时）。",
+    "平均处置时间只统计已解决工单；平均上报耗时只覆盖上报环节，不含等待处置时间。"
   ],
 
-  "assumptionRefs": "CITATION_NEEDED — 参数来源待 AI 1 证据表与 AI 2 实验设计补充",
-
-  "replacementChecklist": [
-    "① 从 simulation/results/final-summary.md 提取六项指标的四情景结果",
-    "② 覆盖本文件 metrics[].values 与 groups[]",
-    "③ 将 dataSource 改为 AI2-simulation，isPlaceholder 改为 false，填写 runDate 与 repeats",
-    "④ 删除 conclusion 中的 PLACEHOLDER_SIM_RESULT 前缀并写入确认过的结论措辞",
-    "⑤ 同步更新 app/data.js 中的 SIM_RESULTS 对象",
-    "⑥ 运行 node prototype/app/shot.js 重新生成截图",
-    "⑦ 更新 prototype/demo-script.md 中与数字有关的旁白",
-    "⑧ 在交接记录中说明替换来源与时间"
+  "consistencyChecklist": [
+    "① 每个数值都能在 _sourceFiles 中找到对应行（aggregated-metrics.csv 的 mean 列、run-metrics.csv 的分组列）",
+    "② 已删除全部 PLACEHOLDER_SIM_RESULT 数值与前缀，改为 dataSource=AI2-simulation",
+    "③ 未产出的敏感性分析与平台复跑保留 SIM_RESULT_NEEDED 标记，不以估计值代替",
+    "④ 参与差距改为两类群体口径，删除原四分组数据",
+    "⑤ 「参与者时间成本」在界面与报告中统一表述为「平均上报耗时」并加口径脚注",
+    "⑥ 已同步更新 app/data.js 的 SIM_RESULTS，并重新生成 14 张截图",
+    "⑦ 界面每一格数值下方显示 95% 区间，表格上方显示数据来源与限定语"
   ]
 }
