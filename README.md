@@ -34,6 +34,7 @@
 - 视频旁白 v1 候选稿：`submission/video/narration-v1.md`
 - 第一轮仿真材料：`simulation/README.md`
 - 第二轮定向任务：`integration/round-2-assignments.md`
+- 当前集成状态：`integration/current-status.md`
 - 系统架构：`integration/system-architecture.md`
 - 验收清单：`integration/acceptance-checklist.md`
 - 协作规则：`CONTRIBUTING.md`
