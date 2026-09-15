@@ -14,7 +14,9 @@
 2. `../integration/system-architecture.md`：理解产品、AI、工单和仿真如何连接。
 3. `../integration/evaluation-mapping.md`：查看评审项与证据位置。
 4. `video/video-outline.md`：查看十分钟演示结构。
-5. `package-checklist.md`：查看最终缺口和打包规则。
+5. `video/narration-v0.md`：查看带占位符的视频旁白初稿。
+6. `reproducibility-index.md`：查看报告结论到原始材料的追溯接口。
+7. `package-checklist.md`：查看最终缺口和打包规则。
 
 ## 固定边界
 
