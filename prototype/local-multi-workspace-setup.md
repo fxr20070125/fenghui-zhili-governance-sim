@@ -152,7 +152,7 @@ submission/
 | 仿真结果数字 | `SIM_RESULT_NEEDED` | AI 2 |
 | 引用与事实来源 | `CITATION_NEEDED` | AI 1 |
 | 界面截图 | `SCREENSHOT_NEEDED` | AI 3 |
-| 原型占位数字 | `PLACEHOLDER_SIM_RESULT` | AI 3 第二轮替换为 AI 2 结果 |
+| 原型占位数字 | `PLACEHOLDER_SIM_RESULT` | **已在第二轮替换为 AI 2 第一轮结果**；仍未产出的敏感性分析与平台复跑改用 `SIM_RESULT_NEEDED_*` |
 
 AI 3 已经交付的、AI 4 可直接引用的内容：
 
