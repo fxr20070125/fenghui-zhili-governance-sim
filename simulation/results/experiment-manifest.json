@@ -1,0 +1,24 @@
+{
+  "project": "蜂汇智理",
+  "schema_version": "1.0",
+  "base_seed": 20260914,
+  "runs_per_scenario": 20,
+  "scenarios": [
+    "S0",
+    "S1",
+    "S2",
+    "S3"
+  ],
+  "paired_common_random_numbers": true,
+  "population_per_run": 240,
+  "days_per_run": 56,
+  "files": {
+    "code\\config.json": "492cbf4cf7dc5732251e83cb0514691359d4bbc20313378e4b308424cd44564e",
+    "code\\run_simulation.py": "3b1135d0b1b0b9681591f280994e69803cc56b44b0fd8907ce6d4ea1cc10a5eb",
+    "results\\run-metrics.csv": "4ea24be0e4f80fb181d872a1c9aa648c507af9cda073ab724d6be201f0aa1174",
+    "results\\aggregated-metrics.csv": "63ca221f2c5be1d480b2866374f9b4ed13c4a0309ee7635104180ed6624e84f5",
+    "results\\paired-effects.csv": "1a9e67d85ea118675cc93d4d9b6621eb7f0353197aaea1dd2a4413cfc3bc820b",
+    "results\\raw\\events.csv": "7bfcadec280a089d08d3dd55e0acf26409c9bbe0e26363ce813881df861ecef1",
+    "results\\round-1-summary.md": "5429de57d22b9e1c11cbdfe312189732ff4551d44a754ba83380b9e405b27d59"
+  }
+}

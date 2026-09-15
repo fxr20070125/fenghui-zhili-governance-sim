@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "experiment": {
+    "project": "蜂汇智理",
+    "population": 240,
+    "days": 56,
+    "runs": 20,
+    "base_seed": 20260914,
+    "daily_encounter_probability": 0.18,
+    "issues_per_day": 20
+  },
+  "population": {
+    "rider_share": 0.773,
+    "profile_ranges": {
+      "time_pressure": [0.45, 0.95],
+      "care_pressure": [0.10, 0.90],
+      "trust": [0.30, 0.75],
+      "privacy_concern": [0.20, 0.85],
+      "service_need": [0.15, 0.95],
+      "civic_motivation": [0.20, 0.85],
+      "digital_comfort": [0.35, 0.95]
+    }
+  },
+  "incident_mix": {
+    "community_access": 0.30,
+    "road_or_facility": 0.25,
+    "traffic": 0.20,
+    "community_service": 0.15,
+    "public_safety": 0.10
+  },
+  "severity_mix": {
+    "low": 0.52,
+    "medium": 0.35,
+    "high": 0.10,
+    "critical": 0.03
+  },
+  "common_parameters": {
+    "report_decision_intercept": -1.20,
+    "trust_weight": 0.90,
+    "civic_motivation_weight": 0.80,
+    "digital_comfort_weight": 0.30,
+    "time_pressure_weight": -1.10,
+    "privacy_risk_weight": -0.80,
+    "minutes_weight": -0.09,
+    "resolved_probability": 0.76,
+    "correct_dispatch_resolution_bonus": 0.10,
+    "base_information_quality": 0.56,
+    "digital_quality_weight": 0.22,
+    "time_quality_weight": -0.12
+  },
+  "scenarios": {
+    "S0": {
+      "label": "现状基准",
+      "ai_reporting": false,
+      "transparent_feedback": false,
+      "differentiated_incentive": false,
+      "submission_minutes": 8.0,
+      "privacy_protection": 0.10,
+      "convenience_bonus": 0.00,
+      "structuring_quality": 0.54,
+      "deduplication_probability": 0.15,
+      "dispatch_accuracy": 0.64,
+      "feedback_probability": 0.08,
+      "transparency_bonus": 0.00,
+      "incentive_strength": 0.00,
+      "base_resolution_hours": 55.0
+    },
+    "S1": {
+      "label": "AI 上报",
+      "ai_reporting": true,
+      "transparent_feedback": false,
+      "differentiated_incentive": false,
+      "submission_minutes": 3.0,
+      "privacy_protection": 0.85,
+      "convenience_bonus": 0.35,
+      "structuring_quality": 0.88,
+      "deduplication_probability": 0.75,
+      "dispatch_accuracy": 0.85,
+      "feedback_probability": 0.12,
+      "transparency_bonus": 0.00,
+      "incentive_strength": 0.00,
+      "base_resolution_hours": 36.0
+    },
+    "S2": {
+      "label": "AI 上报加透明反馈",
+      "ai_reporting": true,
+      "transparent_feedback": true,
+      "differentiated_incentive": false,
+      "submission_minutes": 3.0,
+      "privacy_protection": 0.85,
+      "convenience_bonus": 0.35,
+      "structuring_quality": 0.88,
+      "deduplication_probability": 0.75,
+      "dispatch_accuracy": 0.85,
+      "feedback_probability": 0.92,
+      "transparency_bonus": 0.42,
+      "incentive_strength": 0.00,
+      "base_resolution_hours": 30.0
+    },
+    "S3": {
+      "label": "AI 上报加透明反馈加差异化激励",
+      "ai_reporting": true,
+      "transparent_feedback": true,
+      "differentiated_incentive": true,
+      "submission_minutes": 3.0,
+      "privacy_protection": 0.85,
+      "convenience_bonus": 0.35,
+      "structuring_quality": 0.88,
+      "deduplication_probability": 0.75,
+      "dispatch_accuracy": 0.85,
+      "feedback_probability": 0.92,
+      "transparency_bonus": 0.42,
+      "incentive_strength": 0.55,
+      "base_resolution_hours": 30.0
+    }
+  }
+}
