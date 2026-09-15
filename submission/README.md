@@ -10,13 +10,14 @@
 
 ## 最短阅读路径
 
-1. `report/draft-v0.md`：了解完整申报叙事。
-2. `../integration/system-architecture.md`：理解产品、AI、工单和仿真如何连接。
-3. `../integration/evaluation-mapping.md`：查看评审项与证据位置。
-4. `video/video-outline.md`：查看十分钟演示结构。
-5. `video/narration-v0.md`：查看带占位符的视频旁白初稿。
-6. `reproducibility-index.md`：查看报告结论到原始材料的追溯接口。
-7. `package-checklist.md`：查看最终缺口和打包规则。
+1. `report/draft-v1.md`：阅读已合入第一轮赛题信息和可复现仿真结果的候选稿。
+2. `report/draft-v0.md`：查看第一轮占位骨架。
+3. `../integration/system-architecture.md`：理解产品、AI、工单和仿真如何连接。
+4. `../integration/evaluation-mapping.md`：查看评审项与证据位置。
+5. `video/video-outline.md`：查看十分钟演示结构。
+6. `video/narration-v0.md`：查看带占位符的视频旁白初稿。
+7. `reproducibility-index.md`：查看报告结论到原始材料的追溯接口。
+8. `package-checklist.md`：查看最终缺口和打包规则。
 
 ## 固定边界
 
