@@ -16,12 +16,16 @@
 全部人物画像、事件和实验结果均为合成数据。仿真用于比较机制方向和暴露潜在权衡，不代表真实调查、真实平台运行成效或政策效果证明。
 ```
 
-## 第二步：Agent 与交互描述输入
+## 点击 B 前：追加到概括描述末尾的生成约束
+
+平台没有单独的“第二步提示词”输入框。完成按钮 A 后，请把下面内容追加到可编辑的概括描述末尾，再点击按钮 B；如果已经生成过 B，则追加后重新生成。
 
 ```text
-Agent 类型包括：NewEmploymentWorker（动作：发现、判断、上报、放弃、确认、查看反馈、更新信任）；StationManager（提醒、核实、协助补充）；Resident（产生问题、补充信息、确认改善）；AICoordinator（脱敏、结构化、去重、分类、风险分级、建议分派）；GovernanceReviewer（人工确认、退回、分派）；CommunityResolver、PropertyResolver、GovernmentResolver（核实、处理、转交、反馈）；EmergencyRouter（识别紧急事件并提示法定应急号码）；ServiceMatcher（按需求匹配非现金服务权益）；MetricRecorder（记录事件与指标）。
+Agent 类型包括：NewEmploymentWorker（动作：发现、判断、上报、放弃、确认、查看反馈、更新信任）；StationManager（提醒、核实、协助补充）；Resident（产生问题、补充信息、确认改善）；AICoordinator（脱敏、结构化、去重、分类、风险分级、建议分派）；GovernanceReviewer（人工确认、退回、分派）；CommunityResolver、PropertyResolver、GovernmentResolver（核实、处理、转交、反馈）；EmergencyRouter（识别紧急事件并提示法定应急号码）；FeedbackSystem（按情景返回责任主体、进度、结果和未解决原因）；ServiceMatcher（按需求匹配非现金服务权益）；MetricRecorder（记录事件与指标）。
 
-交互必须形成有限、无环流程。单次机会为：Resident/环境产生问题 → Worker 发现并决定 → 放弃则记录原因，上报则由 EmergencyRouter 判断 → 紧急则提示法定渠道并结束该机会，普通问题依据情景进入零散渠道或 AICoordinator → GovernanceReviewer 人工确认 → 从 Community/Property/Government 三类处置者中择一 → S2、S3 返回透明 Feedback → 仅 S3 经过 ServiceMatcher → Worker 更新信任 → MetricRecorder 记录。将这一过程明确展开为三次顺序机会，前一次更新后的信任供下一次决定使用，但不得画循环回边。不得让 AI 自动代替应急机构或行政人员作最终决定。
+交互必须形成有限、无环流程。单次机会为：Resident/环境产生问题 → Worker 发现并决定 → 放弃则记录原因，上报则由 EmergencyRouter 判断 → 紧急则提示法定渠道并结束该机会，普通问题依据情景进入零散渠道或 AICoordinator → GovernanceReviewer 人工确认 → 从 Community/Property/Government 三类处置者中择一 → S2、S3 由 FeedbackSystem 返回透明反馈 → 仅 S3 经过 ServiceMatcher → Worker 更新信任 → MetricRecorder 记录。将这一过程明确展开为三次顺序机会，前一次更新后的信任供下一次决定使用，但不得画循环回边。不得让 AI 自动代替应急机构或行政人员作最终决定。
+
+分支必须正确：不上报、紧急转接或人工拒绝均不得进入责任主体处置动作，而应记录本次结果后进入下一次发现机会；只有经人工确认的普通工单才能进入责任主体处置。三个机会使用 Round1、Round2、Round3 三套不同动作名称，禁止用回边形成循环。所有事件需携带 scenario_id、worker_type、issue_id、report_decision、report_time、duplicate_flag、dispatch_correct、resolution_status、resolution_hours、feedback_delivered、reward_type、trust_before、trust_after 等可统计字段。
 ```
 
 ## 第三步：画像字段
