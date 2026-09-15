@@ -1,0 +1,322 @@
+1
+执行摘要
+执行摘要：
+
+本实验旨在探究初始信任设定与治理机制响应对新员工上报行为的即时影响。核心发现如下：（1）高压力下员工仅对紧急问题上报，但系统未兑现反馈致信任停滞——李志强#96在第1轮因井盖缺失（is_emergency: true）上报（report_decision_round1=True），但UpdateTrustAndRecord_Round1显示case_state.cases为空，信任值维持0.55；（2）强责任感劳动者持续不上报后续问题——陈浩然#98在第3轮和第5轮均仅第1轮上报共享单车堆积（report_decision_round1=True），但两轮UpdateTrustAndRecord_Round2均报告无反馈，信任值保持0.35；（3）制度承诺未落地——所有轮次ProcessRound声明启用透明反馈与非现金服务（如第4轮李政阳#100提及匹配换电/托管），但各轮case_state.cases始终为空；（4）关键数字：时间压力0.85、照护压力0.75、信任值0.55与0.35均未变动。
+
+2
+场景与研究问题
+本仿真场景聚焦于组织内部员工上报行为与治理流程之间的互动机制。具体而言，研究问题在于：当一名新入职员工（NewEmploymentWorker）面对预设的首轮固定问题时，其是否选择上报、以及何时上报，如何受到初始信任值设定的影响；同时，治理工作流（GovernanceWorkflow）如何对所接收到的上报案例进行应急性判断、执行脱敏审核、派单处理并给予反馈奖励。该机制的重要性在于揭示组织信任环境与制度响应设计对员工合规行为的联合影响。根据给定ODD描述，ScenarioController负责加载场景配置并初始化运行环境，确保仿真起点一致；NewEmploymentWorker在第一轮重置信任值并基于固定问题做出上报决策；GovernanceWorkflow则专门处理第一轮的上报案例，执行包括应急判断、脱敏、派单和奖励在内的完整治理闭环；最后由MetricRecorder汇总并固化全部运行指标数据，为后续分析提供依据。整个仿真仅覆盖第一轮交互，重点考察初始条件与制度响应对上报行为的即时塑造作用。
+
+3
+模型设计
+本仿真模型包含四类 agent，各具明确角色与行为逻辑。ScenarioController 负责加载场景配置并初始化运行环境，为整个仿真提供基础设置，但其具体动作未在给定数据中体现。NewEmploymentWorker 作为一线主体，执行重置信任值、读取第一轮固定问题、决定是否上报及记录报告时间等操作；例如，在第1轮中，该类型 agent 决策是否上报问题，并记录具体报告时间（如“记录报告时间”动作）。GovernanceWorkflow 处理 NewEmploymentWorker 上报的案例，其职责包括判断应急性、执行脱敏审核、派单及反馈奖励逻辑；例如，在第1轮中，该 agent 对上报案例进行处理，完成脱敏审核与派单动作。MetricRecorder 负责汇总并固化全部仿真运行指标数据，但给定数据未展示其具体记录数值或触发轮次。
+
+交互机制表现为线性流程：NewEmploymentWorker 在第1轮产生上报行为后，GovernanceWorkflow 立即接收并处理该上报，形成“上报—处理”闭环。决策机制方面，NewEmploymentWorker 基于第一轮固定问题独立决定是否上报，GovernanceWorkflow 则依据预设规则（如应急性判断、脱敏审核）自动执行后续流程。所有 agent 行为均限定于第1轮，且仅涉及上述指定动作。其余轮次或跨轮次交互在给定数据中未出现。
+
+4
+实验设置
+轮次数 (round=run)
+5
+Agent 类型数
+4
+Agent 实例总数
+10
+总决策数
+55
+使用模型
+OneSim(qwen)
+Agent 类型与实例
+类型	实例数	实例 ID
+GovernanceWorkflow	1	100
+MetricRecorder	4	101, 102, 103, 104
+NewEmploymentWorker	4	96, 97, 98, 99
+ScenarioController	1	95
+本次未提供每轮 cast 信息（round_replicas 缺失）。
+5
+运行总览
+运行 ID
+20260915_232232
+轮次
+5
+决策数
+55
+输出事件数
+55
+成功决策
+55/55
+各角色决策数
+chart
+每轮决策数
+chart
+动作频次 Top
+动作	次数
+ScenarioController.LoadScenario	5
+NewEmploymentWorker.DiscoverAndDecide_Round1	5
+GovernanceWorkflow.ProcessRound_Round1	5
+NewEmploymentWorker.UpdateTrustAndRecord_Round1	5
+NewEmploymentWorker.DiscoverAndDecide_Round2	5
+GovernanceWorkflow.ProcessRound_Round2	5
+NewEmploymentWorker.UpdateTrustAndRecord_Round2	5
+NewEmploymentWorker.DiscoverAndDecide_Round3	5
+GovernanceWorkflow.ProcessRound_Round3	5
+NewEmploymentWorker.UpdateTrustAndRecord_Round3	5
+MetricRecorder.FinalizeMetrics	5
+6
+分轮过程叙事
+【第 1 轮】
+
+ScenarioController-Alpha#95 加载场景 S3，启用 AI 辅助、透明反馈和按需非现金服务机制，并初始化干净状态。李志强#96 在第一轮因井盖缺失（is_emergency: true）选择上报（report_decision_round1=True），尽管时间压力0.85、照护压力0.75。李政阳#100 识别该问题为应急事件，应直转110/119/120，但仅触发分流逻辑，未生成实际工单。李志强#96 在 UpdateTrustAndRecord_Round1 中因 case_state.cases 为空、无处置结果，信任值维持0.55。第二轮李志强#96 因无反馈、高压力选择不上报；李政阳#100 声称将派单并匹配换电/托管服务，但 case_state 仍为空。第三轮李志强#96 继续不上报，李政阳#100 称准备结构化录入，但无实际上报。最终赵明哲#104 指出 metrics_container 中 round_2 与 round_3 数据缺失，无法计算指标。
+
+【第 2 轮】
+
+ScenarioController-Alpha#95 再次加载 S3 场景。李志强#96 第一轮上报（report_decision_round1=True），系统记录上报时间 2024-06-10T08:15:00Z，但 case_state.cases 为空，无反馈，信任值维持0.55。第二轮李志强#96 因无反馈、高压力（时间0.85、照护0.75）选择不上报；李政阳#100 声称将派单并匹配服务，但 case_state 仍为空。第三轮李志强#96 继续不上报。赵明哲#104 确认 metrics_container 包含三轮完整记录，可计算指标。
+
+【第 3 轮】
+
+ScenarioController-Alpha#95 加载 S3，新参与者陈浩然#98（初始信任0.35）在第一轮上报“共享单车堆积”（severity 高，is_emergency=False）。李政阳#100 将其纳入 AI 脱敏流程。陈浩然#98 因无反馈，信任值不变。第二轮陈浩然#98 因无反馈、时间压力0.9 选择不上报；李政阳#100 声称将推送进展并匹配服务，但 case_state 为空。第三轮陈浩然#98 继续不上报。赵明哲#104 计算指标：总上报率1/3；信任均值0.35；AI使用率100%（因 scenario_config.ai_assisted=True）；反馈接收率0%；服务兑现率0%；工单转化率1/3；应急事件正确分流率0/1（唯一应急项 is_emergency=False）。
+
+【第 4 轮】
+
+ScenarioController-Alpha#95 加载 S3，李志强#96 回归。第一轮他上报“海淀区中关村大街15号路灯故障”，该问题被标记为 is_emergency=True。李政阳#100 识别为紧急事件，应直转应急部门，但未生成工单。李志强#96 因无反馈，信任值维持0.55。第二轮他因高压力（时间0.85、照护0.75）且无反馈选择不上报；李政阳#100 声称将派单并匹配换电/托管服务，但 case_state 为空。第三轮李志强#96 继续不上报。赵明哲#104 确认数据完整，可固化指标。
+
+【第 5 轮】
+
+ScenarioController-Alpha#95 加载 S3，陈浩然#98 回归。第一轮他上报“共享单车堆积”，但 scenario_config 定义其 severity 为“低”、is_emergency=False。李政阳#100 将其纳入 AI 脱敏流程。陈浩然#98 因无反馈，信任值下调至0.35。第二轮他因信任低、时间压力0.9 选择不上报；李政阳#100 声称模拟反馈，但 case_state 为空。第三轮无上报；李政阳#100 提及“井盖异响”为紧急事件，但 worker 未上报，故不触发处理。赵明哲#104 计算指标：总上报率1/3；信任均值0.35；AI使用率0%（worker 未使用 AI 功能）；反馈接收率0%；服务兑现率0%；工单转化率1/3。
+
+7
+关键路径与交互
+完整流程数
+5
+展示
+5
+路径 #1
+11 事件
+ScenarioController-Alpha#95 · LoadScenario
+→
+NewEmploymentWorker · DiscoverAndDecide_Round1
+李志强#96 · DiscoverAndDecide_Round1
+→
+GovernanceWorkflow · ProcessRound_Round1
+李政阳#100 · ProcessRound_Round1
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round1
+李志强#96 · UpdateTrustAndRecord_Round1
+→
+NewEmploymentWorker · DiscoverAndDecide_Round2
+李志强#96 · DiscoverAndDecide_Round2
+→
+GovernanceWorkflow · ProcessRound_Round2
+李政阳#100 · ProcessRound_Round2
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round2
+李志强#96 · UpdateTrustAndRecord_Round2
+→
+NewEmploymentWorker · DiscoverAndDecide_Round3
+李志强#96 · DiscoverAndDecide_Round3
+→
+GovernanceWorkflow · ProcessRound_Round3
+李政阳#100 · ProcessRound_Round3
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round3
+李志强#96 · UpdateTrustAndRecord_Round3
+→
+MetricRecorder · FinalizeMetrics
+赵明哲#104 · FinalizeMetrics
+路径 #2
+11 事件
+ScenarioController-Alpha#95 · LoadScenario
+→
+NewEmploymentWorker · DiscoverAndDecide_Round1
+李志强#96 · DiscoverAndDecide_Round1
+→
+GovernanceWorkflow · ProcessRound_Round1
+李政阳#100 · ProcessRound_Round1
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round1
+李志强#96 · UpdateTrustAndRecord_Round1
+→
+NewEmploymentWorker · DiscoverAndDecide_Round2
+李志强#96 · DiscoverAndDecide_Round2
+→
+GovernanceWorkflow · ProcessRound_Round2
+李政阳#100 · ProcessRound_Round2
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round2
+李志强#96 · UpdateTrustAndRecord_Round2
+→
+NewEmploymentWorker · DiscoverAndDecide_Round3
+李志强#96 · DiscoverAndDecide_Round3
+→
+GovernanceWorkflow · ProcessRound_Round3
+李政阳#100 · ProcessRound_Round3
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round3
+李志强#96 · UpdateTrustAndRecord_Round3
+→
+MetricRecorder · FinalizeMetrics
+赵明哲#104 · FinalizeMetrics
+路径 #3
+11 事件
+ScenarioController-Alpha#95 · LoadScenario
+→
+NewEmploymentWorker · DiscoverAndDecide_Round1
+陈浩然#98 · DiscoverAndDecide_Round1
+→
+GovernanceWorkflow · ProcessRound_Round1
+李政阳#100 · ProcessRound_Round1
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round1
+陈浩然#98 · UpdateTrustAndRecord_Round1
+→
+NewEmploymentWorker · DiscoverAndDecide_Round2
+陈浩然#98 · DiscoverAndDecide_Round2
+→
+GovernanceWorkflow · ProcessRound_Round2
+李政阳#100 · ProcessRound_Round2
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round2
+陈浩然#98 · UpdateTrustAndRecord_Round2
+→
+NewEmploymentWorker · DiscoverAndDecide_Round3
+陈浩然#98 · DiscoverAndDecide_Round3
+→
+GovernanceWorkflow · ProcessRound_Round3
+李政阳#100 · ProcessRound_Round3
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round3
+陈浩然#98 · UpdateTrustAndRecord_Round3
+→
+MetricRecorder · FinalizeMetrics
+赵明哲#104 · FinalizeMetrics
+路径 #4
+11 事件
+ScenarioController-Alpha#95 · LoadScenario
+→
+NewEmploymentWorker · DiscoverAndDecide_Round1
+李志强#96 · DiscoverAndDecide_Round1
+→
+GovernanceWorkflow · ProcessRound_Round1
+李政阳#100 · ProcessRound_Round1
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round1
+李志强#96 · UpdateTrustAndRecord_Round1
+→
+NewEmploymentWorker · DiscoverAndDecide_Round2
+李志强#96 · DiscoverAndDecide_Round2
+→
+GovernanceWorkflow · ProcessRound_Round2
+李政阳#100 · ProcessRound_Round2
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round2
+李志强#96 · UpdateTrustAndRecord_Round2
+→
+NewEmploymentWorker · DiscoverAndDecide_Round3
+李志强#96 · DiscoverAndDecide_Round3
+→
+GovernanceWorkflow · ProcessRound_Round3
+李政阳#100 · ProcessRound_Round3
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round3
+李志强#96 · UpdateTrustAndRecord_Round3
+→
+MetricRecorder · FinalizeMetrics
+赵明哲#104 · FinalizeMetrics
+路径 #5
+11 事件
+ScenarioController-Alpha#95 · LoadScenario
+→
+NewEmploymentWorker · DiscoverAndDecide_Round1
+陈浩然#98 · DiscoverAndDecide_Round1
+→
+GovernanceWorkflow · ProcessRound_Round1
+李政阳#100 · ProcessRound_Round1
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round1
+陈浩然#98 · UpdateTrustAndRecord_Round1
+→
+NewEmploymentWorker · DiscoverAndDecide_Round2
+陈浩然#98 · DiscoverAndDecide_Round2
+→
+GovernanceWorkflow · ProcessRound_Round2
+李政阳#100 · ProcessRound_Round2
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round2
+陈浩然#98 · UpdateTrustAndRecord_Round2
+→
+NewEmploymentWorker · DiscoverAndDecide_Round3
+陈浩然#98 · DiscoverAndDecide_Round3
+→
+GovernanceWorkflow · ProcessRound_Round3
+李政阳#100 · ProcessRound_Round3
+→
+NewEmploymentWorker · UpdateTrustAndRecord_Round3
+陈浩然#98 · UpdateTrustAndRecord_Round3
+→
+MetricRecorder · FinalizeMetrics
+赵明哲#104 · FinalizeMetrics
+8
+指标与量化结果
+本次运行未采集到自定义指标或量化时序数据（场景未定义指标 / 运行未记录）。
+9
+关键发现与证据
+高压力下骑手仅对紧急问题上报，但系统未兑现反馈导致信任停滞：李志强在第1轮（时间压力0.85、照护压力0.75）因井盖缺失（is_emergency: true）选择上报（第1轮），但第2轮UpdateTrustAndRecord显示cases为空且无反馈，信任值维持0.55不变；第4轮他再次因路灯故障（is_emergency=True）上报（第1轮），但第2轮仍无处置记录，信任继续停滞（第2轮UpdateTrustAndRecord_Round2）。
+强责任感劳动者因反馈缺失而持续不信任：陈浩然在第3轮和第5轮均以公民责任感0.85、数字熟练度0.95上报共享单车堆积问题（第1轮），但两轮后续的UpdateTrustAndRecord均指出cases为空、无反馈，信任值始终维持初始低水平0.35（第3轮UpdateTrustAndRecord_Round2、第5轮UpdateTrustAndRecord_Round2）。
+机制启用但服务与反馈实际未触发：所有轮次中ProcessRound均声明启用了透明反馈与按需非现金服务（如第2轮ProcessRound_Round2、第4轮ProcessRound_Round2），但各轮UpdateTrustAndRecord consistently报告“未兑现任何反馈或服务激励”（如第2轮李志强、第3轮陈浩然、第5轮陈浩然），导致服务兑现率与反馈接收率均为0（第3轮FinalizeMetrics明确计算）。
+应急事件分流逻辑存在误判风险：第3轮FinalizeMetrics指出“应急事件正确分流率=0/1”，因唯一被worker视为紧急的共享单车堆积问题在scenario_config中is_emergency=False，却被当作普通事件处理，说明系统依赖预设标记而非worker感知（第3轮ProcessRound_Round1）。
+AI辅助启用但未提升工单转化：尽管所有S3轮次scenario_config.ai_assisted=True（如第1、2、3、4、5轮LoadScenario），但工单转化率仅为1/3（第3轮FinalizeMetrics），因多数轮次case_state.cases为空（如第1轮第2-3轮、第2轮全部轮次），表明AI预处理未促成有效工单生成。
+10
+涌现规律与机制解读
+在多轮仿真中，新就业劳动者（如李志强、陈浩然）的上报行为呈现“首轮响应、后续沉默”的规律。第1轮中，李志强因井盖缺失属应急事件而上报（第1轮，李志强#96，report_decision_round1=True）；第2轮其未再上报（第2轮，李志强#96，report_decision_round2=False），理由是“无反馈且压力高”（时间压力0.85、照护压力0.75）。第3轮仍不上报（第3轮，李志强#96，无新案例）。类似地，陈浩然在第3轮和第5轮均仅在第1轮上报共享单车堆积（第3轮，陈浩然#98，report_decision_round1=True；第5轮同），后续因“信任未提升”（维持0.35）且“无处置反馈”（case_state.cases为空）而停止上报。
+
+该现象与机制配置形成反差：尽管S3场景始终启用透明反馈与非现金服务（如第4轮李政阳#100提及“匹配换电或子女托管”），但所有轮次中case_state.cases持续为空（如第1轮李志强#96 UpdateTrustAndRecord_Round1：“cases为空”；第2轮同；第3轮陈浩然#98同），表明承诺的服务与反馈从未兑现。因此，劳动者信任值始终未变（李志强维持0.55，陈浩然维持0.35），直接抑制后续上报意愿。
+
+此外，AI辅助虽被启用（scenario_config.ai_assisted=True），但因无实际上报进入处理流程（如第5轮赵明哲#104指出“AI使用率为0”），机制空转。唯一例外是第4轮李志强上报路灯故障（is_emergency=True），但同样未获反馈（第4轮UpdateTrustAndRecord_Round1：“cases为空”），说明即使识别出应急事件，若无闭环反馈，仍无法维持参与。
+
+11
+Agent 行为画像
+分角色行为统计
+类型	活跃实例	决策数	主要动作
+GovernanceWorkflow	1	15	ProcessRound_Round1×5, ProcessRound_Round2×5, ProcessRound_Round3×5
+MetricRecorder	1	5	FinalizeMetrics×5
+NewEmploymentWorker	2	30	DiscoverAndDecide_Round1×5, UpdateTrustAndRecord_Round1×5, DiscoverAndDecide_Round2×5, UpdateTrustAndRecord_Round2×5
+ScenarioController	1	5	LoadScenario×5
+12
+跨轮对比与稳健性
+各轮规模对比
+轮	决策数	输出事件	活跃类型	成功率
+1	11	11	4	11/11
+2	11	11	4	11/11
+3	11	11	4	11/11
+4	11	11	4	11/11
+5	11	11	4	11/11
+13
+可信度与局限
+可信度与局限
+
+本仿真运行共5轮、55次决策，样本规模有限，尤其每轮仅涉及单一新就业劳动者（如李志强#96）与一名治理协调员（李政阳#100），难以反映多元主体互动的复杂性。第1轮中，李志强因高时间压力（0.85）和照护压力（0.75）仍选择上报井盖缺失（第1轮，李志强#96，DiscoverAndDecide_Round1），但后续因无实际案例处置结果，信任值未更新（第1轮，李志强#96，UpdateTrustAndRecord_Round1）。这显示机制对“上报即反馈”闭环支持不足。此外，第2轮李志强选择观望（第1轮末尾，李志强#96，DiscoverAndDecide_Round2），暗示压力因素可能抑制持续参与，但受限于仅5轮数据，无法判断长期行为趋势。LLM生成的动作描述存在随机性，例如事件分类依赖预设fixed_issue_set（第1轮，李政阳#100，ProcessRound_Round1），未覆盖动态新增问题情形。trace虽记录完整决策链，但缺乏真实用户行为验证，且未模拟多劳动者并发上报、跨轮次信任累积等场景，结论外推需谨慎。
+
+14
+结论与后续实验建议
+结论与后续实验建议（298字）：
+
+在S3场景下，尽管启用了AI辅助、透明反馈和按需非现金服务三项机制，但新就业劳动者（李志强、陈浩然）的上报行为未转化为有效工单，且信任值始终未提升。第1–5轮中，所有agent在三轮内最多仅上报1次（如第3轮陈浩然#98 Round1上报共享单车堆积；第4轮李志强#96 Round1上报路灯故障），但case_state.cases持续为空（第1轮李志强#96 UpdateTrustAndRecord_Round2；第3轮陈浩然#98 UpdateTrustAndRecord_Round2），表明系统未兑现反馈或服务承诺。信任值维持初始水平（李志强0.55、陈浩然0.35），甚至因无反馈而隐含下降意愿（第5轮陈浩然#98 UpdateTrustAndRecord_Round1）。
+
+建议下一步：强制在ProcessRound阶段填充case_state.cases并触发反馈，以验证机制是否真能提升信任；同时增加应急事件比例（当前多轮is_emergency=False），观察高风险问题是否能突破时间压力促成持续上报。此外，应区分AI使用率的计算逻辑——当前因worker未操作即记为0%（第5轮FinalizeMetrics），但scenario_config.ai_assisted=True，需明确“启用”与“实际调用”的指标定义。
+
+15
+附录
+完整 cast 清单
+类型	ID	名称
+GovernanceWorkflow	100	李政阳
+MetricRecorder	104	赵明哲
+NewEmploymentWorker	96	李志强
+NewEmploymentWorker	98	陈浩然
+ScenarioController	95	ScenarioController-Alpha
+原始决策样本（每类型）
+类型	动作	推理摘录
+ScenarioController	LoadScenario	根据当前事件要求加载仿真场景配置并初始化运行环境，需依据my_scenario_id='S3'严格映射机制开关：AI辅助、透明反馈和按需非现金服务均启用。同时初始化干净的case_state与metrics_container，确保跨场景无污染，并从候选新就业劳动者中选择一位参与首轮。
+NewEmploymentWorker	DiscoverAndDecide_Round1	作为外卖骑手，我当前时间压力大（0.85）且需照顾年迈母亲（照护压力0.75），但面对井盖缺失这一高风险紧急问题，我的公民责任感（0.7）促使我选择上报；同时数字熟练度尚可（0.6），能顺利完成操作。
+GovernanceWorkflow	ProcessRound_Round1	当前事件为第一轮上报案例，根据scenario_config中的fixed_issue_set，三个问题中仅‘西城区金融街23号井盖缺失’标记为应急事件（is_emergency: true），需优先处理。依据流程，应急事件应直转110/119/120，但本系统作为数字化治理协调员角色，在GovernanceWorkflow中负责识别并触发后续分流逻辑；其余非应急事件将在AI辅助下进入脱敏审核等后续阶段。由于worker已确认上报且scenario启用ai_assisted，…
+MetricRecorder	FinalizeMetrics	根据任务要求，需汇总全部三轮记录并计算八项核心指标。但当前metrics_container中round_2与round_3均引用同一未填充的round_2模板（reported为False且其余字段为None），表明第二、三轮实际行为数据缺失；同时worker_profile仅包含第一轮上报信息，无法推导后续轮次行为。因此，在现有输入下无法完成有效指标计算，必须指出数据不完整问题以确保指标容器结构的稳定性与结果可比性。
+数据口径：所有统计与路径均来自本次运行最新 trace 的 action_records，路径按 output↔input 事件 id 串链（与结果分析面板一致）。

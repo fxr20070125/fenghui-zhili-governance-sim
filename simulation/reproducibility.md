@@ -48,4 +48,4 @@ CSV 使用 UTF-8 BOM，便于直接用 Excel 打开。摘要为程序生成文�
 
 ## 5 玉兰万象复跑
 
-自主代码用于确保第一轮可执行和可审计。玉兰万象平台复跑需根据 `evidence/onesim-scenario-prompt.md` 创建场景，按 `behavior-graph.md` 生成并验证无环图，导入 `agent-profiles.md` 字段，建立 5 个以上画像副本，分别切换 S0—S3 机制运行。平台导出的原始事件、决策和执行记录应保存到 `simulation/evidence/onesim-export/`，不得只保留自动报告截图。
+自主代码用于确保第一轮可执行和可审计。玉兰万象平台首次跑通优先使用 `evidence/onesim-fast-scenario-prompt.md`，并严格按 `evidence/onesim-fast-runbook.md` 操作；该版本把流程压缩为4类Agent和11个动作，同时保留三轮、人工审核、应急分流与八项指标。`evidence/onesim-scenario-prompt.md` 保留为35节点完整版，供时间允许时增强验证。平台导出的原始事件、决策和执行记录应保存到 `simulation/evidence/onesim-export/`，不得只保留自动报告截图。

@@ -13,7 +13,10 @@
 - `code/`：配置、仿真程序和验证程序。
 - `results/`：第一轮原始日志、逐轮指标、聚合指标和摘要。
 - `evidence/`：参数登记、材料依据和玉兰万象迁移输入。
+- `evidence/onesim-fast-scenario-prompt.md`：玉兰万象30分钟紧凑版的四块可粘贴输入及最小画像。
+- `evidence/onesim-fast-runbook.md`：从停止旧任务到S0—S3运行、导出和汇总的完整操作清单。
 - `first-round-handoff.md`：交给 AI 4 的摘要。
+- `AI2-final-delivery.md`：AI2最终实验交付，统一说明本地量化主证据、玉兰补充验证、可直接引用结论与写作红线。
 
 ## 最短复现命令
 
