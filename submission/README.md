@@ -15,7 +15,7 @@
 3. `../integration/system-architecture.md`：理解产品、AI、工单和仿真如何连接。
 4. `../integration/evaluation-mapping.md`：查看评审项与证据位置。
 5. `video/video-outline.md`：查看十分钟演示结构。
-6. `video/narration-v0.md`：查看带占位符的视频旁白初稿。
+6. `video/narration-v1.md`：查看已合入第一轮仿真结果的候选旁白；`video/narration-v0.md` 保留为原始骨架。
 7. `reproducibility-index.md`：查看报告结论到原始材料的追溯接口。
 8. `package-checklist.md`：查看最终缺口和打包规则。
 

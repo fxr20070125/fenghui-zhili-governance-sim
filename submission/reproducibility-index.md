@@ -2,23 +2,23 @@
 
 ## 目标
 
-本索引用于让评委或审计人员从报告结论追溯到模型配置、运行日志、汇总结果、图表和产品截图。当前仅建立接口，路径须在对应角色提交后验证。
+本索引用于让评委或审计人员从报告结论追溯到模型配置、运行日志、汇总结果、图表和产品截图。仿真第一轮材料已由 AI 4 隔离复跑并核对一致；产品证据仍须在 AI 3 最新成果到位后验证。
 
 ## 仿真复现链
 
 | 环节 | 预期文件 | 负责人 | 当前状态 |
 | --- | --- | --- | --- |
-| 模型说明 | `simulation/model-spec.md` | AI 2 | 待交付 |
-| 智能体画像 | `simulation/agent-profiles.md` | AI 2 | 待交付 |
-| 行为图 | `simulation/behavior-graph.md` | AI 2 | 待交付 |
-| 场景配置 | `simulation/scenario-config.md` | AI 2 | 待交付 |
-| 实验计划 | `simulation/experiment-plan.md` | AI 2 | 待交付 |
-| 代码入口 | `simulation/code/` | AI 2 | 待交付 |
-| 首轮原始输出 | `simulation/evidence/` | AI 2 | 待交付 |
-| 结果摘要 | `simulation/results/round-1-summary.md` | AI 2 | 待交付 |
+| 模型说明 | `simulation/model-spec.md` | AI 2 | 已合入并核验 |
+| 智能体画像 | `simulation/agent-profiles.md` | AI 2 | 已合入并核验 |
+| 行为图 | `simulation/behavior-graph.md` | AI 2 | 已合入并核验 |
+| 场景配置 | `simulation/scenario-config.md` | AI 2 | 已合入并核验 |
+| 实验计划 | `simulation/experiment-plan.md` | AI 2 | 已合入并核验 |
+| 代码入口 | `simulation/code/` | AI 2 | 已合入；配置和输出校验通过 |
+| 首轮原始输出 | `simulation/evidence/`、`simulation/results/raw/events.csv` | AI 2 | 已合入；共 80 次运行 |
+| 结果摘要 | `simulation/results/round-1-summary.md` | AI 2 | 已合入并核验 |
 | 最终结果 | `simulation/results/final-summary.md` | AI 2 | 第二轮待交付 |
 | 敏感性分析 | `simulation/results/sensitivity-analysis.md` | AI 2 | 第二轮待交付 |
-| 复现说明 | `simulation/reproducibility.md` | AI 2 | 待交付 |
+| 复现说明 | `simulation/reproducibility.md` | AI 2 | 已合入并核验 |
 
 ## 产品证据链
 
